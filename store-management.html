@@ -221,6 +221,20 @@
                     return;
                 }
 
+                // Xử lý copy ảnh thumbnail vào thư mục images
+                let thumbnailPath = '';
+                const fs = require('fs');
+                const path = require('path');
+                const thumbnailInput = document.getElementById('thumbnail');
+                if (thumbnailInput && thumbnailInput.files && thumbnailInput.files[0]) {
+                    const file = thumbnailInput.files[0];
+                    const imagesDir = path.join(__dirname, 'images');
+                    if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir);
+                    const destPath = path.join(imagesDir, file.name);
+                    fs.copyFileSync(file.path, destPath);
+                    thumbnailPath = `images/${file.name}`;
+                }
+
                 const product = {
                     id: Date.now().toString(),
                     name,
@@ -230,7 +244,7 @@
                     salePrice,
                     discountPercent,
                     discountAmount,
-                    thumbnail: document.getElementById('thumbnail').value,
+                    thumbnail: thumbnailPath,
                     productImages: Array.from(document.getElementById('productImages').files).map(file => file.name)
                 };
                 console.log('Product data to add:', product);
@@ -311,3 +325,4 @@
     </script>
 </body>
 </html>
+``` 

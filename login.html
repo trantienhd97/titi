@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập - titi</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        
+        .login-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+        
+        h2 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            width: 100%;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+        }
+        
+        button.secondary {
+            background-color: #757575;
+        }
+        
+        button.secondary:hover {
+            background-color: #616161;
+        }
+        
+        .toggle-form {
+            margin-top: 20px;
+            color: #4285f4;
+            cursor: pointer;
+            display: inline-block;
+        }
+        
+        .toggle-form:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            color: red;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .success-message {
+            color: green;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        #loginForm, #registerForm, #dbSettingsForm {
+            transition: opacity 0.3s ease;
+        }
+        
+        #registerForm, #dbSettingsForm {
+            display: none;
+        }
+        
+        .server-settings {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        
+        .server-settings h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        
+        .toggle-settings {
+            margin-top: 10px;
+            color: #4285f4;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2 id="formTitle">Đăng nhập vào ứng dụng titi</h2>
+        
+        <!-- Form đăng nhập -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Tên đăng nhập:</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Mật khẩu:</label>
+                <input type="password" id="password" required>
+            </div>
+            
+            <!-- Cài đặt SQL Server -->
+            <div class="server-settings">
+                <h3>Cài đặt SQL Server</h3>
+                <div class="form-group">
+                    <label for="server">Server:</label>
+                    <input type="text" id="server" value="localhost" required>
+                </div>
+                <div class="form-group">
+                    <label for="database">Cơ sở dữ liệu:</label>
+                    <input type="text" id="database" value="TitiDB" required>
+                </div>
+                <div class="form-group">
+                    <label for="dbUsername">Tên đăng nhập DB:</label>
+                    <input type="text" id="dbUsername" value="sa" required>
+                </div>
+                <div class="form-group">
+                    <label for="dbPassword">Mật khẩu DB:</label>
+                    <input type="password" id="dbPassword" value="YourStrong@Passw0rd" required>
+                </div>
+            </div>
+            
+            <button type="submit">Đăng nhập</button>
+            <div class="toggle-form" id="showRegister">Chưa có tài khoản? Đăng ký ngay</div>
+        </form>
+        
+        <!-- Form đăng ký -->
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="regUsername">Tên đăng nhập:</label>
+                <input type="text" id="regUsername" required>
+            </div>
+            <div class="form-group">
+                <label for="regFullName">Họ tên:</label>
+                <input type="text" id="regFullName" required>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Mật khẩu:</label>
+                <input type="password" id="regPassword" required>
+            </div>
+            <div class="form-group">
+                <label for="regConfirmPassword">Xác nhận mật khẩu:</label>
+                <input type="password" id="regConfirmPassword" required>
+            </div>
+            
+            <!-- Cài đặt SQL Server cho đăng ký -->
+            <div class="server-settings">
+                <h3>Cài đặt SQL Server</h3>
+                <div class="form-group">
+                    <label for="regServer">Server:</label>
+                    <input type="text" id="regServer" value="localhost" required>
+                </div>
+                <div class="form-group">
+                    <label for="regDatabase">Cơ sở dữ liệu:</label>
+                    <input type="text" id="regDatabase" value="TitiDB" required>
+                </div>
+                <div class="form-group">
+                    <label for="regDbUsername">Tên đăng nhập DB:</label>
+                    <input type="text" id="regDbUsername" value="sa" required>
+                </div>
+                <div class="form-group">
+                    <label for="regDbPassword">Mật khẩu DB:</label>
+                    <input type="password" id="regDbPassword" value="YourStrong@Passw0rd" required>
+                </div>
+            </div>
+            
+            <button type="submit">Đăng ký</button>
+            <button type="button" class="secondary" id="cancelRegister">Hủy</button>
+            <div class="toggle-form" id="showLogin">Đã có tài khoản? Đăng nhập ngay</div>
+        </form>
+        
+        <p class="error-message" id="errorMessage"></p>
+        <p class="success-message" id="successMessage"></p>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        // Các phần tử DOM
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const formTitle = document.getElementById('formTitle');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const cancelRegister = document.getElementById('cancelRegister');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        
+        // Chuyển đổi giữa form đăng nhập và đăng ký
+        function showLoginForm() {
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            formTitle.textContent = 'Đăng nhập vào ứng dụng titi';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+        
+        function showRegisterForm() {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            formTitle.textContent = 'Đăng ký tài khoản mới';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+        
+        // Sự kiện chuyển đổi form
+        showRegister.addEventListener('click', showRegisterForm);
+        showLogin.addEventListener('click', showLoginForm);
+        cancelRegister.addEventListener('click', showLoginForm);
+        
+        // Xử lý đăng nhập
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const credentials = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                dbConfig: {
+                    server: document.getElementById('server').value,
+                    database: document.getElementById('database').value,
+                    username: document.getElementById('dbUsername').value,
+                    password: document.getElementById('dbPassword').value
+                }
+            };
+            
+            errorMessage.style.display = 'none';
+            
+            // Gửi thông tin đăng nhập đến main process
+            ipcRenderer.send('login', credentials);
+        });
+        
+        // Xử lý đăng ký
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('regUsername').value;
+            const fullName = document.getElementById('regFullName').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            const dbConfig = {
+                server: document.getElementById('regServer').value,
+                database: document.getElementById('regDatabase').value,
+                username: document.getElementById('regDbUsername').value,
+                password: document.getElementById('regDbPassword').value
+            };
+            
+            errorMessage.style.display = 'none';
+            
+            // Kiểm tra mật khẩu xác nhận
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Mật khẩu xác nhận không khớp!';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            // Gửi thông tin đăng ký đến main process
+            ipcRenderer.send('register', { username, password, fullName, dbConfig });
+        });
+        
+        // Nhận phản hồi từ main process
+        ipcRenderer.on('login-response', (event, response) => {
+            if (response.success) {
+                console.log('Đăng nhập thành công!');
+                // Chuyển trang được xử lý ở main.js
+            } else {
+                // Hiển thị thông báo lỗi
+                errorMessage.textContent = response.message || 'Đăng nhập không thành công!';
+                errorMessage.style.display = 'block';
+            }
+        });
+        
+        // Nhận phản hồi đăng ký từ main process
+        ipcRenderer.on('register-response', (event, response) => {
+            if (response.success) {
+                successMessage.textContent = 'Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.';
+                successMessage.style.display = 'block';
+                
+                // Xóa dữ liệu form và chuyển về form đăng nhập sau 2 giây
+                registerForm.reset();
+                setTimeout(showLoginForm, 2000);
+            } else {
+                errorMessage.textContent = response.message || 'Đăng ký không thành công!';
+                errorMessage.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

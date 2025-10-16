@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Xem cơ sở dữ liệu - titi</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: #4285f4;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .username {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        
+        .content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        .tables-list {
+            display: flex;
+            margin-bottom: 30px;
+        }
+        
+        .tables-sidebar {
+            width: 200px;
+            border-right: 1px solid #ddd;
+            padding-right: 20px;
+            margin-right: 20px;
+        }
+        
+        .tables-sidebar h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        
+        .table-item {
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .table-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .table-item.active {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            font-weight: bold;
+        }
+        
+        .table-details {
+            flex-grow: 1;
+        }
+        
+        .table-details h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #4285f4;
+            padding-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 12px;
+            border-radius: 3px;
+            color: white;
+            background-color: #757575;
+            margin-right: 5px;
+        }
+        
+        .badge.primary {
+            background-color: #ff5722;
+        }
+        
+        .no-tables {
+            padding: 20px;
+            text-align: center;
+            color: #757575;
+            font-style: italic;
+        }
+        
+        .loading {
+            padding: 20px;
+            text-align: center;
+            color: #757575;
+        }
+        
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+        }
+        
+        button.secondary {
+            background-color: #757575;
+        }
+        
+        button.secondary:hover {
+            background-color: #616161;
+        }
+        
+        .error-message {
+            color: red;
+            padding: 10px;
+            border: 1px solid red;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Xem cơ sở dữ liệu SQL Server - titi</h1>
+        <div class="user-info">
+            <span class="username" id="userDisplay"></span>
+            <button id="backBtn" class="secondary">Quay lại</button>
+            <button id="logoutBtn">Đăng xuất</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="content">
+            <h2>Danh sách bảng trong cơ sở dữ liệu</h2>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div id="loading" class="loading">
+                Đang tải danh sách bảng...
+            </div>
+            
+            <div id="tablesContainer" class="tables-list" style="display: none;">
+                <div class="tables-sidebar">
+                    <h3>Danh sách bảng</h3>
+                    <div id="tablesList"></div>
+                </div>
+                
+                <div class="table-details">
+                    <h2 id="selectedTableName">Chọn một bảng</h2>
+                    <div id="tableStructure"></div>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button id="refreshBtn">Làm mới danh sách</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        // Các phần tử DOM
+        const userDisplay = document.getElementById('userDisplay');
+        const backBtn = document.getElementById('backBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const loading = document.getElementById('loading');
+        const tablesContainer = document.getElementById('tablesContainer');
+        const tablesList = document.getElementById('tablesList');
+        const selectedTableName = document.getElementById('selectedTableName');
+        const tableStructure = document.getElementById('tableStructure');
+        const refreshBtn = document.getElementById('refreshBtn');
+        
+        // Yêu cầu thông tin người dùng và danh sách bảng
+        ipcRenderer.send('get-current-user');
+        loadTables();
+        
+        // Nhận thông tin người dùng từ main process
+        ipcRenderer.on('current-user', (event, user) => {
+            if (user) {
+                userDisplay.textContent = user.username;
+            }
+        });
+        
+        // Nhận danh sách bảng
+        ipcRenderer.on('get-all-tables-response', (event, response) => {
+            loading.style.display = 'none';
+            
+            if (response.success) {
+                tablesContainer.style.display = 'flex';
+                renderTablesList(response.tables);
+            } else {
+                showError(response.message || 'Không thể lấy danh sách bảng.');
+            }
+        });
+        
+        // Nhận cấu trúc bảng
+        ipcRenderer.on('get-table-structure-response', (event, response) => {
+            if (response.success) {
+                renderTableStructure(response.tableName, response.columns);
+            } else {
+                showError(response.message || 'Không thể lấy cấu trúc bảng.');
+            }
+        });
+        
+        // Hiển thị thông báo lỗi
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        // Tải danh sách bảng
+        function loadTables() {
+            loading.style.display = 'block';
+            tablesContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+            ipcRenderer.send('get-all-tables');
+        }
+        
+        // Hiển thị danh sách bảng
+        function renderTablesList(tables) {
+            tablesList.innerHTML = '';
+            
+            if (!tables || tables.length === 0) {
+                tablesList.innerHTML = '<div class="no-tables">Không có bảng nào</div>';
+                return;
+            }
+            
+            tables.forEach(table => {
+                const tableItem = document.createElement('div');
+                tableItem.className = 'table-item';
+                tableItem.textContent = table.tableName;
+                tableItem.dataset.schema = table.schemaName;
+                tableItem.dataset.table = table.tableName;
+                
+                tableItem.addEventListener('click', () => {
+                    // Xóa class active từ tất cả các phần tử
+                    document.querySelectorAll('.table-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // Thêm class active vào phần tử được chọn
+                    tableItem.classList.add('active');
+                    
+                    // Hiển thị tên bảng được chọn
+                    const fullTableName = `${table.schemaName}.${table.tableName}`;
+                    selectedTableName.textContent = fullTableName;
+                    
+                    // Tải cấu trúc bảng
+                    ipcRenderer.send('get-table-structure', fullTableName);
+                });
+                
+                tablesList.appendChild(tableItem);
+            });
+        }
+        
+        // Hiển thị cấu trúc bảng
+        function renderTableStructure(tableName, columns) {
+            if (!columns || columns.length === 0) {
+                tableStructure.innerHTML = '<div class="no-tables">Không có thông tin cột</div>';
+                return;
+            }
+            
+            // Tạo bảng hiển thị cấu trúc
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tên cột</th>
+                            <th>Kiểu dữ liệu</th>
+                            <th>Độ dài</th>
+                            <th>Cho phép null</th>
+                            <th>Khóa chính</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            columns.forEach(column => {
+                let dataTypeDisplay = column.dataType;
+                if (column.maxLength > 0 && column.maxLength < 8000) {
+                    dataTypeDisplay += `(${column.maxLength / 2})`;  // Chia cho 2 vì SQL Server lưu Unicode là 2 bytes
+                } else if (column.precision > 0) {
+                    dataTypeDisplay += `(${column.precision}, ${column.scale})`;
+                }
+                
+                html += `
+                    <tr>
+                        <td>${column.columnName}</td>
+                        <td>${dataTypeDisplay}</td>
+                        <td>${column.maxLength > 0 ? column.maxLength : '-'}</td>
+                        <td>${column.isNullable ? 'Có' : 'Không'}</td>
+                        <td>${column.isPrimaryKey ? '<span class="badge primary">Khóa chính</span>' : '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            tableStructure.innerHTML = html;
+        }
+        
+        // Xử lý sự kiện làm mới danh sách
+        refreshBtn.addEventListener('click', loadTables);
+        
+        // Xử lý sự kiện quay lại
+        backBtn.addEventListener('click', function() {
+            ipcRenderer.send('go-to-main');
+        });
+        
+        // Xử lý sự kiện đăng xuất
+        logoutBtn.addEventListener('click', function() {
+            ipcRenderer.send('logout');
+        });
+    </script>
+</body>
+</html>

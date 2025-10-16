@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Tài khoản - titi</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: #4285f4;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .username {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        
+        .content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+        }
+        
+        button.secondary {
+            background-color: #757575;
+        }
+        
+        button.secondary:hover {
+            background-color: #616161;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Quản lý Tài khoản - titi</h1>
+        <div class="user-info">
+            <span class="username" id="userDisplay"></span>
+            <button id="backBtn" class="secondary">Quay lại</button>
+            <button id="logoutBtn">Đăng xuất</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="content">
+            <h2>Danh sách tài khoản đã đăng ký</h2>
+            <table id="accountsTable">
+                <thead>
+                    <tr>
+                        <th>Tên đăng nhập</th>
+                        <th>Họ tên</th>
+                        <th>Ngày tạo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dữ liệu sẽ được thêm vào đây bằng JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        // Yêu cầu thông tin người dùng hiện tại và danh sách tài khoản
+        ipcRenderer.send('get-current-user');
+        ipcRenderer.send('get-all-accounts');
+        
+        // Nhận thông tin người dùng từ main process
+        ipcRenderer.on('current-user', (event, user) => {
+            if (user) {
+                document.getElementById('userDisplay').textContent = user.username;
+            }
+        });
+        
+        // Nhận danh sách tài khoản
+        ipcRenderer.on('all-accounts', (event, accounts) => {
+            const tableBody = document.querySelector('#accountsTable tbody');
+            tableBody.innerHTML = '';
+            
+            if (accounts && accounts.length > 0) {
+                accounts.forEach(account => {
+                    const row = document.createElement('tr');
+                    
+                    // Tạo cột tên đăng nhập
+                    const usernameCell = document.createElement('td');
+                    usernameCell.textContent = account.username;
+                    row.appendChild(usernameCell);
+                    
+                    // Tạo cột họ tên
+                    const fullNameCell = document.createElement('td');
+                    fullNameCell.textContent = account.fullName;
+                    row.appendChild(fullNameCell);
+                    
+                    // Tạo cột ngày tạo
+                    const createdAtCell = document.createElement('td');
+                    createdAtCell.textContent = new Date(account.createdAt).toLocaleString();
+                    row.appendChild(createdAtCell);
+                    
+                    tableBody.appendChild(row);
+                });
+            } else {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 3;
+                cell.textContent = 'Không có tài khoản nào';
+                cell.style.textAlign = 'center';
+                row.appendChild(cell);
+                tableBody.appendChild(row);
+            }
+        });
+        
+        // Xử lý sự kiện quay lại
+        document.getElementById('backBtn').addEventListener('click', function() {
+            ipcRenderer.send('go-to-main');
+        });
+        
+        // Xử lý sự kiện đăng xuất
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            ipcRenderer.send('logout');
+        });
+    </script>
+</body>
+</html>

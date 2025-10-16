@@ -290,3 +290,22 @@ ipcMain.handle('get-products', async () => {
         return { success: false, message: 'Không thể lấy danh sách sản phẩm. Vui lòng thử lại!' };
     }
 });
+
+ipcMain.handle('delete-product', async (event, productId) => {
+  try {
+    const db = require('./database.js');
+    await db.deleteProductFromDatabase(productId);
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('update-product', async (event, product) => {
+  try {
+    await database.updateProductInDatabase(product);
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});

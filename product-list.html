@@ -36,9 +36,17 @@
             </tbody>
         </table>
     </div>
+    <div id="deleteConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:24px 32px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); min-width:300px; text-align:center;">
+            <p style="font-size:18px; margin-bottom:20px;">Bạn có chắc chắn muốn xoá sản phẩm này?</p>
+            <button id="confirmDeleteBtn" style="background:#db4437; color:#fff; padding:8px 20px; border:none; border-radius:4px; margin-right:10px;">Có</button>
+            <button id="cancelDeleteBtn" style="background:#757575; color:#fff; padding:8px 20px; border:none; border-radius:4px;">Không</button>
+        </div>
+    </div>
     <script>
     let allProducts = [];
     let editingIndex = -1;
+    let deleteIndex = -1;
     async function fetchProducts() {
         try {
             const { ipcRenderer } = require('electron');
@@ -103,6 +111,7 @@
     window.saveEdit = async function(idx) {
         const { ipcRenderer } = require('electron');
         const product = allProducts[idx];
+        const discountAmountValue = parseFloat(document.getElementById('editDiscountAmount').value);
         const updated = {
             ...product,
             name: document.getElementById('editName').value,
@@ -110,7 +119,7 @@
             importPrice: parseFloat(document.getElementById('editImportPrice').value),
             salePrice: parseFloat(document.getElementById('editSalePrice').value),
             discountPercent: parseFloat(document.getElementById('editDiscountPercent').value),
-            discountAmount: parseFloat(document.getElementById('editDiscountAmount').value)
+            discountAmount: isNaN(discountAmountValue) ? 0 : discountAmountValue
         };
         const response = await ipcRenderer.invoke('update-product', updated);
         if (response.success) {
@@ -121,17 +130,27 @@
             alert(response.message || 'Cập nhật thất bại!');
         }
     }
-    window.deleteProduct = async function(idx) {
-        if (!confirm('Bạn có chắc chắn muốn xoá sản phẩm này?')) return;
+    window.deleteProduct = function(idx) {
+        deleteIndex = idx;
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+    document.getElementById('cancelDeleteBtn').onclick = function() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+        deleteIndex = -1;
+    }
+    document.getElementById('confirmDeleteBtn').onclick = async function() {
+        if (deleteIndex === -1) return;
         const { ipcRenderer } = require('electron');
-        const product = allProducts[idx];
+        const product = allProducts[deleteIndex];
         const response = await ipcRenderer.invoke('delete-product', product.id);
         if (response.success) {
-            allProducts.splice(idx, 1);
+            allProducts.splice(deleteIndex, 1);
             renderProducts(filterProducts(document.getElementById('searchInput').value));
         } else {
             alert(response.message || 'Xoá thất bại!');
         }
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+        deleteIndex = -1;
     }
     function filterProducts(keyword) {
         if (!keyword) return allProducts;

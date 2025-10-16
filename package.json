@@ -10,12 +10,19 @@
     "build-win": "electron-builder --win",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["electron", "desktop", "sql-server", "macOS", "windows"],
+  "keywords": [
+    "electron",
+    "desktop",
+    "sql-server",
+    "macOS",
+    "windows"
+  ],
   "author": "tientv@192",
   "license": "ISC",
   "devDependencies": {
     "electron": "^30.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "electron-reload": "^2.0.0-alpha.1"
   },
   "dependencies": {
     "sequelize": "^6.35.2",

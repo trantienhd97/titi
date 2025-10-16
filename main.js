@@ -3,6 +3,7 @@ const path = require('path');
 const url = require('url');
 const database = require('./database');
 const crypto = require('crypto');
+require('electron-reload')(__dirname);
 
 // Giữ một tham chiếu toàn cục đến cửa sổ, nếu không thì cửa sổ 
 // sẽ tự động đóng khi đối tượng JavaScript bị thu gom rác

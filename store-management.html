@@ -79,7 +79,12 @@
     </div>
     <div class="container">
         <h2 class="title">Chức năng quản lý cửa hàng sẽ được phát triển tại đây.</h2>
-        <div class="info">
+        <ul class="menu-list" style="list-style:none; padding:0; display:flex; gap:20px; margin-bottom:30px;">
+            <li><button id="menu-product">Sản phẩm</button></li>
+            <li><button id="menu-order">Đơn hàng</button></li>
+            <li><button id="menu-customer">Khách hàng</button></li>
+        </ul>
+        <div class="info" id="infoContent">
             <p>Bạn có thể thêm, sửa, xóa thông tin cửa hàng, sản phẩm, nhân viên, ...</p>
             <p>Hãy phát triển thêm các tính năng theo nhu cầu của bạn!</p>
         </div>
@@ -101,6 +106,16 @@
         document.getElementById('logoutBtn').addEventListener('click', function() {
             ipcRenderer.send('logout');
         });
+        // Thêm sự kiện cho menu
+        document.getElementById('menu-product').onclick = function() {
+            document.getElementById('infoContent').innerHTML = '<h3>Quản lý Sản phẩm</h3><p>Chức năng quản lý sản phẩm sẽ được phát triển tại đây.</p>';
+        };
+        document.getElementById('menu-order').onclick = function() {
+            document.getElementById('infoContent').innerHTML = '<h3>Quản lý Đơn hàng</h3><p>Chức năng quản lý đơn hàng sẽ được phát triển tại đây.</p>';
+        };
+        document.getElementById('menu-customer').onclick = function() {
+            document.getElementById('infoContent').innerHTML = '<h3>Quản lý Khách hàng</h3><p>Chức năng quản lý khách hàng sẽ được phát triển tại đây.</p>';
+        };
     </script>
 </body>
 </html>

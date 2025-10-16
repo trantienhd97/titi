@@ -65,6 +65,9 @@ class Database {
       await this.sequelize.sync({ alter: true });
       console.log('Đồng bộ hóa các bảng thành công.');
       
+      // Initialize database (create tables if not exist)
+      await this.initializeDatabase();
+
       this.isConnected = true;
       return true;
     } catch (error) {
@@ -294,6 +297,130 @@ class Database {
     } catch (error) {
       console.error(`Lỗi khi lấy cấu trúc bảng ${tableName}:`, error);
       return { success: false, message: `Có lỗi xảy ra khi lấy cấu trúc bảng ${tableName}.` };
+    }
+  }
+
+  /**
+   * Thêm sản phẩm vào cơ sở dữ liệu
+   * @param {Object} product - Thông tin sản phẩm
+   */
+  async addProductToDatabase(product) {
+    const query = `INSERT INTO Products (id, name, code, autoCode, importPrice, salePrice, discountPercent, discountAmount, thumbnail, productImages) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const params = [
+        product.id,
+        product.name,
+        product.code,
+        product.autoCode,
+        product.importPrice,
+        product.salePrice,
+        product.discountPercent,
+        product.discountAmount,
+        product.thumbnail,
+        JSON.stringify(product.productImages)
+    ];
+    try {
+        console.log('Executing query:', query);
+        console.log('With parameters:', params);
+        await this.sequelize.query(query, { replacements: params });
+        console.log('Product added to database successfully');
+    } catch (error) {
+        console.error('Error adding product to database:', error);
+        throw new Error(`Failed to add product: ${error.message}`);
+    }
+  }
+
+  /**
+   * Cập nhật sản phẩm trong cơ sở dữ liệu
+   * @param {Object} product - Thông tin sản phẩm
+   */
+  async updateProductInDatabase(product) {
+    const query = `UPDATE Products SET name = ?, code = ?, importPrice = ?, salePrice = ?, discountPercent = ?, discountAmount = ?, thumbnail = ?, productImages = ? WHERE id = ?`;
+    const params = [
+        product.name,
+        product.code,
+        product.importPrice,
+        product.salePrice,
+        product.discountPercent,
+        product.discountAmount,
+        product.thumbnail,
+        JSON.stringify(product.productImages),
+        product.id
+    ];
+    try {
+        console.log('Executing query:', query);
+        console.log('With parameters:', params);
+        await this.sequelize.query(query, { replacements: params });
+        console.log('Product updated in database successfully');
+    } catch (error) {
+        console.error('Error updating product in database:', error);
+        throw new Error(`Failed to update product: ${error.message}`);
+    }
+  }
+
+  /**
+   * Xóa sản phẩm khỏi cơ sở dữ liệu
+   * @param {string} productId - ID sản phẩm
+   */
+  async deleteProductFromDatabase(productId) {
+    const query = `DELETE FROM Products WHERE id = ?`;
+    try {
+        console.log('Executing query:', query);
+        console.log('With parameter:', productId);
+        await this.sequelize.query(query, { replacements: [productId] });
+        console.log('Product deleted from database successfully');
+    } catch (error) {
+        console.error('Error deleting product from database:', error);
+        throw new Error(`Failed to delete product: ${error.message}`);
+    }
+  }
+
+  /**
+   * Tạo bảng Products nếu chưa tồn tại
+   */
+  async createProductsTable() {
+    const query = `IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Products' AND xtype='U')
+    BEGIN
+        CREATE TABLE Products (
+            id NVARCHAR(50) PRIMARY KEY,
+            name NVARCHAR(255) NOT NULL,
+            code NVARCHAR(50),
+            autoCode NVARCHAR(50),
+            importPrice FLOAT,
+            salePrice FLOAT,
+            discountPercent FLOAT,
+            discountAmount FLOAT,
+            thumbnail NVARCHAR(MAX),
+            productImages NVARCHAR(MAX)
+        )
+    END`;
+    try {
+        await this.sequelize.query(query);
+        console.log('Products table created successfully');
+    } catch (error) {
+        console.error('Error creating Products table:', error);
+    }
+  }
+
+  /**
+   * Khởi tạo cơ sở dữ liệu (tạo bảng nếu chưa tồn tại)
+   */
+  async initializeDatabase() {
+    await this.createProductsTable();
+  }
+
+  /**
+   * Lấy danh sách sản phẩm từ cơ sở dữ liệu
+   */
+  async getAllProducts() {
+    const query = `SELECT * FROM Products`;
+    try {
+        console.log('Executing query:', query);
+        const [results] = await this.sequelize.query(query);
+        console.log('Products retrieved successfully:', results);
+        return results;
+    } catch (error) {
+        console.error('Error retrieving products from database:', error);
+        throw new Error('Failed to retrieve products');
     }
   }
 }

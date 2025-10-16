@@ -270,3 +270,23 @@ ipcMain.on('go-to-store-management', (event) => {
     slashes: true
   }));
 });
+
+ipcMain.handle('add-product', async (event, product) => {
+    try {
+        await database.addProductToDatabase(product);
+        return { success: true, message: 'Sản phẩm đã được thêm vào cơ sở dữ liệu.' };
+    } catch (error) {
+        console.error('Error in add-product handler:', error);
+        return { success: false, message: 'Không thể thêm sản phẩm. Vui lòng thử lại!' };
+    }
+});
+
+ipcMain.handle('get-products', async () => {
+    try {
+        const products = await database.getAllProducts();
+        return { success: true, products };
+    } catch (error) {
+        console.error('Error in get-products handler:', error);
+        return { success: false, message: 'Không thể lấy danh sách sản phẩm. Vui lòng thử lại!' };
+    }
+});

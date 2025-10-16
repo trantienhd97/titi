@@ -108,7 +108,146 @@
         });
         // Thêm sự kiện cho menu
         document.getElementById('menu-product').onclick = function() {
-            document.getElementById('infoContent').innerHTML = '<h3>Quản lý Sản phẩm</h3><p>Chức năng quản lý sản phẩm sẽ được phát triển tại đây.</p>';
+            document.getElementById('infoContent').innerHTML = `
+                <h3>Quản lý Sản phẩm</h3>
+                <form id="productForm">
+                    <label for="productId">ID:</label>
+                    <input type="text" id="productId" disabled><br>
+
+                    <label for="productName">Tên sản phẩm:</label>
+                    <input type="text" id="productName"><br>
+
+                    <label for="productCode">Mã tự nhập:</label>
+                    <input type="text" id="productCode"><br>
+
+                    <label for="autoCode">Mã tự sinh:</label>
+                    <input type="text" id="autoCode" disabled><br>
+
+                    <label for="importPrice">Giá nhập:</label>
+                    <input type="number" id="importPrice"><br>
+
+                    <label for="salePrice">Giá bán:</label>
+                    <input type="number" id="salePrice"><br>
+
+                    <label for="discountPercent">% Giảm giá:</label>
+                    <input type="number" id="discountPercent"><br>
+
+                    <label for="discountAmount">Tiền giảm giá:</label>
+                    <input type="number" id="discountAmount"><br>
+
+                    <label for="thumbnail">Ảnh đại diện:</label>
+                    <input type="file" id="thumbnail"><br>
+
+                    <label for="productImages">Ảnh sản phẩm:</label>
+                    <input type="file" id="productImages" multiple><br>
+
+                    <button type="button" id="addProduct">Thêm sản phẩm</button>
+                    <button type="button" id="updateProduct">Sửa sản phẩm</button>
+                    <button type="button" id="deleteProduct">Xóa sản phẩm</button>
+                </form>
+                <div id="productList">
+                    <h4>Danh sách sản phẩm</h4>
+                    <ul id="productListContainer"></ul>
+                </div>
+            `;
+            const productList = [];
+
+            function renderProductList() {
+                const container = document.getElementById('productListContainer');
+                container.innerHTML = '';
+                productList.forEach((product, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${product.name} - ${product.salePrice} VND`;
+                    li.dataset.index = index;
+                    li.onclick = () => loadProductToForm(index);
+                    container.appendChild(li);
+                });
+            }
+
+            function loadProductToForm(index) {
+                const product = productList[index];
+                document.getElementById('productId').value = product.id;
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productCode').value = product.code;
+                document.getElementById('autoCode').value = product.autoCode;
+                document.getElementById('importPrice').value = product.importPrice;
+                document.getElementById('salePrice').value = product.salePrice;
+                document.getElementById('discountPercent').value = product.discountPercent;
+                document.getElementById('discountAmount').value = product.discountAmount;
+            }
+
+            document.getElementById('addProduct').onclick = async () => {
+                const product = {
+                    id: Date.now().toString(),
+                    name: document.getElementById('productName').value,
+                    code: document.getElementById('productCode').value,
+                    autoCode: `AUTO-${Date.now()}`,
+                    importPrice: parseFloat(document.getElementById('importPrice').value),
+                    salePrice: parseFloat(document.getElementById('salePrice').value),
+                    discountPercent: parseFloat(document.getElementById('discountPercent').value),
+                    discountAmount: parseFloat(document.getElementById('discountAmount').value),
+                    thumbnail: document.getElementById('thumbnail').value,
+                    productImages: Array.from(document.getElementById('productImages').files).map(file => file.name)
+                };
+                try {
+                    const { ipcRenderer } = require('electron');
+                    ipcRenderer.invoke('add-product', product);
+                    productList.push(product);
+                    renderProductList();
+                    alert('Sản phẩm đã được thêm vào cơ sở dữ liệu!');
+                } catch (error) {
+                    console.error('Lỗi khi thêm sản phẩm:', error);
+                    alert('Không thể thêm sản phẩm. Vui lòng thử lại!');
+                }
+            };
+
+            document.getElementById('updateProduct').onclick = () => {
+                const id = document.getElementById('productId').value;
+                const index = productList.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    productList[index].name = document.getElementById('productName').value;
+                    productList[index].code = document.getElementById('productCode').value;
+                    productList[index].importPrice = parseFloat(document.getElementById('importPrice').value);
+                    productList[index].salePrice = parseFloat(document.getElementById('salePrice').value);
+                    productList[index].discountPercent = parseFloat(document.getElementById('discountPercent').value);
+                    productList[index].discountAmount = parseFloat(document.getElementById('discountAmount').value);
+                    renderProductList();
+                }
+            };
+
+            document.getElementById('deleteProduct').onclick = () => {
+                const id = document.getElementById('productId').value;
+                const index = productList.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    productList.splice(index, 1);
+                    renderProductList();
+                }
+            };
+
+            async function fetchProducts() {
+                try {
+                    const { ipcRenderer } = require('electron');
+                    const response = await ipcRenderer.invoke('get-products');
+                    if (response.success) {
+                        const products = response.products;
+                        const container = document.getElementById('productListContainer');
+                        container.innerHTML = '';
+                        products.forEach(product => {
+                            const li = document.createElement('li');
+                            li.textContent = `${product.name} - ${product.salePrice} VND`;
+                            container.appendChild(li);
+                        });
+                    } else {
+                        alert(response.message);
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi lấy danh sách sản phẩm:', error);
+                    alert('Không thể lấy danh sách sản phẩm. Vui lòng thử lại!');
+                }
+            }
+
+            // Gọi hàm fetchProducts khi hiển thị giao diện quản lý sản phẩm
+            fetchProducts();
         };
         document.getElementById('menu-order').onclick = function() {
             document.getElementById('infoContent').innerHTML = '<h3>Quản lý Đơn hàng</h3><p>Chức năng quản lý đơn hàng sẽ được phát triển tại đây.</p>';

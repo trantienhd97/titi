@@ -309,3 +309,14 @@ ipcMain.handle('update-product', async (event, product) => {
     return { success: false, message: error.message };
   }
 });
+
+ipcMain.handle('get-product-detail', async (event, productId) => {
+  try {
+    const products = await database.getAllProducts();
+    const product = products.find(p => p.id == productId);
+    if (product) return { success: true, product };
+    return { success: false, message: 'Không tìm thấy sản phẩm' };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+});

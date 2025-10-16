@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết sản phẩm</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 36px 40px; }
+        h2 { color: #17a2b8; text-align: center; letter-spacing: 1px; }
+        .product-img { display: block; margin: 0 auto 24px auto; width: 180px; height: 180px; object-fit: cover; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); background: #f3f3f3; }
+        .info-row { display: flex; margin-bottom: 16px; }
+        .info-label { width: 160px; color: #888; font-weight: 500; }
+        .info-value { flex: 1; color: #222; font-weight: 600; }
+        .back-btn { margin-bottom: 20px; background: #4285f4; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="window.history.back()">Quay lại</button>
+        <h2>Chi tiết Sản phẩm</h2>
+        <img id="productImg" class="product-img" src="https://via.placeholder.com/180x180?text=No+Image" alt="Ảnh sản phẩm">
+        <div class="info-row"><div class="info-label">Tên sản phẩm:</div><div class="info-value" id="productName"></div></div>
+        <div class="info-row"><div class="info-label">Mã sản phẩm:</div><div class="info-value" id="productCode"></div></div>
+        <div class="info-row"><div class="info-label">Giá nhập:</div><div class="info-value" id="importPrice"></div></div>
+        <div class="info-row"><div class="info-label">Giá bán:</div><div class="info-value" id="salePrice"></div></div>
+        <div class="info-row"><div class="info-label">% Giảm giá:</div><div class="info-value" id="discountPercent"></div></div>
+        <div class="info-row"><div class="info-label">Tiền giảm giá:</div><div class="info-value" id="discountAmount"></div></div>
+    </div>
+    <script>
+    function getProductIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id');
+    }
+    async function fetchProductDetail(productId) {
+        const { ipcRenderer } = require('electron');
+        const response = await ipcRenderer.invoke('get-product-detail', productId);
+        if (response.success && response.product) {
+            const p = response.product;
+            document.getElementById('productName').textContent = p.name || '';
+            document.getElementById('productCode').textContent = p.code || '';
+            document.getElementById('importPrice').textContent = p.importPrice || '';
+            document.getElementById('salePrice').textContent = p.salePrice || '';
+            document.getElementById('discountPercent').textContent = p.discountPercent || '';
+            document.getElementById('discountAmount').textContent = p.discountAmount || '';
+            document.getElementById('productImg').src = (p.thumbnail && p.thumbnail.trim() !== '') ? p.thumbnail : 'https://via.placeholder.com/180x180?text=No+Image';
+        } else {
+            alert('Không tìm thấy sản phẩm!');
+        }
+    }
+    const productId = getProductIdFromUrl();
+    if (productId) fetchProductDetail(productId);
+    else alert('Không tìm thấy sản phẩm!');
+    </script>
+</body>
+</html>

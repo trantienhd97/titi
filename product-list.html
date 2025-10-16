@@ -83,6 +83,12 @@
         products.forEach((product, idx) => {
             const tr = document.createElement('tr');
             const thumbnail = product.thumbnail && product.thumbnail.trim() !== '' ? product.thumbnail : 'https://via.placeholder.com/60x60?text=No+Image';
+            tr.style.cursor = 'pointer';
+            tr.onclick = function(e) {
+                // Nếu click vào nút Sửa/Xoá thì không chuyển trang
+                if (e.target.closest('button')) return;
+                window.location.href = `product-detail.html?id=${encodeURIComponent(product.id)}`;
+            };
             if (editingIndex === idx) {
                 tr.innerHTML = `
                     <td>

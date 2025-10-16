@@ -109,54 +109,45 @@
         // Thêm sự kiện cho menu
         document.getElementById('menu-product').onclick = function() {
             document.getElementById('infoContent').innerHTML = `
-                <h3 style="color: #4285f4; text-align: center;">Quản lý Sản phẩm</h3>
-                <form id="productForm" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
-                    <div style="margin-bottom: 15px;">
-                        <label for="productName" style="display: block; font-weight: bold; margin-bottom: 5px;">Tên sản phẩm:</label>
-                        <input type="text" id="productName" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                <h3>Quản lý Sản phẩm</h3>
+                <form id="productForm">
+                    <label for="productId">ID:</label>
+                    <input type="text" id="productId" disabled><br>
 
-                    <div style="margin-bottom: 15px;">
-                        <label for="productCode" style="display: block; font-weight: bold; margin-bottom: 5px;">Mã tự nhập:</label>
-                        <input type="text" id="productCode" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                    <label for="productName">Tên sản phẩm:</label>
+                    <input type="text" id="productName"><br>
 
-                    <div style="margin-bottom: 15px;">
-                        <label for="importPrice" style="display: block; font-weight: bold; margin-bottom: 5px;">Giá nhập:</label>
-                        <input type="number" id="importPrice" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                    <label for="productCode">Mã tự nhập:</label>
+                    <input type="text" id="productCode"><br>
 
-                    <div style="margin-bottom: 15px;">
-                        <label for="salePrice" style="display: block; font-weight: bold; margin-bottom: 5px;">Giá bán:</label>
-                        <input type="number" id="salePrice" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                    <label for="autoCode">Mã tự sinh:</label>
+                    <input type="text" id="autoCode" disabled><br>
 
-                    <div style="margin-bottom: 15px;">
-                        <label for="discountPercent" style="display: block; font-weight: bold; margin-bottom: 5px;">% Giảm giá:</label>
-                        <input type="number" id="discountPercent" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                    <label for="importPrice">Giá nhập:</label>
+                    <input type="number" id="importPrice"><br>
 
-                    <div style="margin-bottom: 15px;">
-                        <label for="thumbnail" style="display: block; font-weight: bold; margin-bottom: 5px;">Ảnh đại diện:</label>
-                        <input type="file" id="thumbnail" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                    <label for="salePrice">Giá bán:</label>
+                    <input type="number" id="salePrice"><br>
 
-                    <div style="margin-bottom: 15px;">
-                        <label for="productImages" style="display: block; font-weight: bold; margin-bottom: 5px;">Ảnh sản phẩm:</label>
-                        <input type="file" id="productImages" multiple style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                    <label for="discountPercent">% Giảm giá:</label>
+                    <input type="number" id="discountPercent"><br>
 
-                    <div style="text-align: center;">
-                        <button type="button" id="addProduct" style="background-color: #4285f4; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Thêm sản phẩm</button>
-                        <button type="button" id="updateProduct" style="background-color: #f4b400; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Sửa sản phẩm</button>
-                        <button type="button" id="deleteProduct" style="background-color: #db4437; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Xóa sản phẩm</button>
-                    </div>
+                    <label for="discountAmount">Tiền giảm giá:</label>
+                    <input type="number" id="discountAmount"><br>
+
+                    <label for="thumbnail">Ảnh đại diện:</label>
+                    <input type="file" id="thumbnail"><br>
+
+                    <label for="productImages">Ảnh sản phẩm:</label>
+                    <input type="file" id="productImages" multiple><br>
+
+                    <button type="button" id="addProduct">Thêm sản phẩm</button>
+                    <button type="button" id="updateProduct">Sửa sản phẩm</button>
+                    <button type="button" id="deleteProduct">Xóa sản phẩm</button>
                 </form>
-                <div id="productList" style="max-width: 600px; margin: 20px auto;">
-                    <h4 style="color: #4285f4; text-align: center;">Danh sách sản phẩm</h4>
-                    <ul id="productListContainer" style="list-style: none; padding: 0;">
-                        <!-- Danh sách sản phẩm sẽ được hiển thị tại đây -->
-                    </ul>
+                <div id="productList">
+                    <h4>Danh sách sản phẩm</h4>
+                    <ul id="productListContainer"></ul>
                 </div>
             `;
             const productList = [];
@@ -186,24 +177,58 @@
             }
 
             document.getElementById('addProduct').onclick = async () => {
+                const name = document.getElementById('productName').value.trim();
+                const code = document.getElementById('productCode').value.trim();
+                const importPrice = parseFloat(document.getElementById('importPrice').value);
+                const salePrice = parseFloat(document.getElementById('salePrice').value);
+                const discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
+                const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
+
+                // Validate input fields
+                if (!name) {
+                    alert('Tên sản phẩm không được để trống!');
+                    return;
+                }
+                if (isNaN(importPrice) || importPrice <= 0) {
+                    alert('Giá nhập phải là một số hợp lệ và lớn hơn 0!');
+                    return;
+                }
+                if (isNaN(salePrice) || salePrice <= 0) {
+                    alert('Giá bán phải là một số hợp lệ và lớn hơn 0!');
+                    return;
+                }
+                if (isNaN(discountPercent) || discountPercent < 0) {
+                    alert('% Giảm giá phải là một số hợp lệ và không âm!');
+                    return;
+                }
+                if (isNaN(discountAmount) || discountAmount < 0) {
+                    alert('Tiền giảm giá phải là một số hợp lệ và không âm!');
+                    return;
+                }
+
                 const product = {
                     id: Date.now().toString(),
-                    name: document.getElementById('productName').value,
-                    code: document.getElementById('productCode').value,
+                    name,
+                    code,
                     autoCode: `AUTO-${Date.now()}`,
-                    importPrice: parseFloat(document.getElementById('importPrice').value),
-                    salePrice: parseFloat(document.getElementById('salePrice').value),
-                    discountPercent: parseFloat(document.getElementById('discountPercent').value),
-                    discountAmount: parseFloat(document.getElementById('discountAmount').value),
+                    importPrice,
+                    salePrice,
+                    discountPercent,
+                    discountAmount,
                     thumbnail: document.getElementById('thumbnail').value,
                     productImages: Array.from(document.getElementById('productImages').files).map(file => file.name)
                 };
+                console.log('Product data to add:', product);
                 try {
                     const { ipcRenderer } = require('electron');
-                    ipcRenderer.invoke('add-product', product);
-                    productList.push(product);
-                    renderProductList();
-                    alert('Sản phẩm đã được thêm vào cơ sở dữ liệu!');
+                    const response = await ipcRenderer.invoke('add-product', product);
+                    if (response.success) {
+                        productList.push(product);
+                        renderProductList();
+                        alert('Sản phẩm đã được thêm vào cơ sở dữ liệu!');
+                    } else {
+                        alert(response.message);
+                    }
                 } catch (error) {
                     console.error('Lỗi khi thêm sản phẩm:', error);
                     alert('Không thể thêm sản phẩm. Vui lòng thử lại!');

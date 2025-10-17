@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>TITI - Hệ thống Quản lý</title>
+    <link rel="stylesheet" href="header.css">
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -10,27 +11,7 @@
             margin: 0;
             padding: 0;
         }
-        .header {
-            background-color: #4285f4;
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .header .user-info {
-            display: flex;
-            align-items: center;
-        }
-        .header .username {
-            margin-right: 15px;
-            font-weight: bold;
-        }
+        
         .container {
             max-width: 1200px;
             margin: 30px auto;
@@ -107,13 +88,7 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>TITI - Hệ thống Quản lý</h1>
-        <div class="user-info">
-            <span class="username" id="userDisplay"></span>
-            <button id="logoutBtn" style="background-color: #db4437; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Đăng xuất</button>
-        </div>
-    </div>
+    <!-- Header sẽ được tự động chèn bởi header.js -->
     
     <div class="container">
         <div class="welcome-box">
@@ -152,43 +127,6 @@
         <p>&copy; 2025 TITI. Phần mềm quản lý cửa hàng | Phiên bản 1.0.0</p>
     </footer>
     
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Kiểm tra đăng nhập
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            // Hiển thị thông tin người dùng
-            const user = JSON.parse(localStorage.getItem('currentUser'));
-            if (user) {
-                document.getElementById('userDisplay').textContent = user.username;
-            }
-            
-            // Thiết lập sự kiện logout
-            document.getElementById('logoutBtn').addEventListener('click', async function() {
-                try {
-                    await fetch('/api/auth/logout', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('currentUser');
-                    window.location.href = 'index.html';
-                } catch (error) {
-                    console.error('Lỗi khi đăng xuất:', error);
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('currentUser');
-                    window.location.href = 'index.html';
-                }
-            });
-        });
-    </script>
+    <script src="header.js"></script>
 </body>
 </html>

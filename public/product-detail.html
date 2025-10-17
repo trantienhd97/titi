@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Chi tiết Sản phẩm</title>
+    <link rel="stylesheet" href="header.css">
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -135,6 +136,8 @@
     </style>
 </head>
 <body>
+    <!-- Header sẽ được tự động chèn bởi header.js -->
+    
     <div class="container">
         <button class="back-btn" onclick="window.history.back()">Quay lại</button>
         <h2>Chi tiết Sản phẩm</h2>
@@ -204,6 +207,7 @@
         </div>
     </div>
 
+    <script src="header.js"></script>
     <script>
         // Kiểm tra xem có đang chạy trong Electron hay không
         const isElectron = window.navigator.userAgent.toLowerCase().indexOf('electron') !== -1;

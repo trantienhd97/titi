@@ -25,6 +25,10 @@
         <div class="info-row"><div class="info-label">Giá bán:</div><div class="info-value" id="salePrice"></div></div>
         <div class="info-row"><div class="info-label">% Giảm giá:</div><div class="info-value" id="discountPercent"></div></div>
         <div class="info-row"><div class="info-label">Tiền giảm giá:</div><div class="info-value" id="discountAmount"></div></div>
+        <div class="info-row"><div class="info-label">Mô tả:</div><div class="info-value" id="description"></div></div>
+        <div class="info-row"><div class="info-label">Số lượng đã nhập:</div><div class="info-value" id="importedQuantity"></div></div>
+        <div class="info-row"><div class="info-label">Số lượng đã bán:</div><div class="info-value" id="soldQuantity"></div></div>
+        <div class="info-row"><div class="info-label">Số lượng còn lại:</div><div class="info-value" id="remainingQuantity"></div></div>
     </div>
     <script>
     function getProductIdFromUrl() {
@@ -42,7 +46,11 @@
             document.getElementById('salePrice').textContent = p.salePrice || '';
             document.getElementById('discountPercent').textContent = p.discountPercent || '';
             document.getElementById('discountAmount').textContent = p.discountAmount || '';
+            document.getElementById('description').textContent = p.description || '';
             document.getElementById('productImg').src = (p.thumbnail && p.thumbnail.trim() !== '') ? p.thumbnail : 'https://via.placeholder.com/180x180?text=No+Image';
+            document.getElementById('importedQuantity').textContent = p.importedQuantity ?? 0;
+            document.getElementById('soldQuantity').textContent = p.soldQuantity ?? 0;
+            document.getElementById('remainingQuantity').textContent = p.remainingQuantity ?? 0;
         } else {
             alert('Không tìm thấy sản phẩm!');
         }

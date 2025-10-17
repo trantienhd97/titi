@@ -305,7 +305,20 @@ class Database {
    * @param {Object} product - Thông tin sản phẩm
    */
   async addProductToDatabase(product) {
-    const query = `INSERT INTO Products (id, name, code, autoCode, importPrice, salePrice, discountPercent, discountAmount, thumbnail, productImages) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    // Tính toán lại các trường số lượng
+    let importedQuantity = parseInt(product.importedQuantity) || 0;
+    let soldQuantity = parseInt(product.soldQuantity) || 0;
+    let remainingQuantity = parseInt(product.remainingQuantity) || 0;
+    // Ưu tiên: nếu nhập importedQuantity và soldQuantity, tính remainingQuantity
+    if (!isNaN(importedQuantity) && !isNaN(soldQuantity)) {
+        remainingQuantity = importedQuantity - soldQuantity;
+    } else if (!isNaN(importedQuantity) && !isNaN(remainingQuantity)) {
+        soldQuantity = importedQuantity - remainingQuantity;
+    } else if (!isNaN(soldQuantity) && !isNaN(remainingQuantity)) {
+        importedQuantity = soldQuantity + remainingQuantity;
+    }
+
+    const query = `INSERT INTO Products (id, name, code, autoCode, importPrice, salePrice, discountPercent, discountAmount, thumbnail, productImages, description, importedQuantity, soldQuantity, remainingQuantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const params = [
         product.id,
         product.name,
@@ -316,7 +329,11 @@ class Database {
         product.discountPercent,
         product.discountAmount,
         product.thumbnail,
-        JSON.stringify(product.productImages)
+        JSON.stringify(product.productImages),
+        product.description || null,
+        importedQuantity,
+        soldQuantity,
+        remainingQuantity
     ];
     try {
         console.log('Executing query:', query);
@@ -334,7 +351,20 @@ class Database {
    * @param {Object} product - Thông tin sản phẩm
    */
   async updateProductInDatabase(product) {
-    const query = `UPDATE Products SET name = ?, code = ?, importPrice = ?, salePrice = ?, discountPercent = ?, discountAmount = ?, thumbnail = ?, productImages = ? WHERE id = ?`;
+    // Tính toán lại các trường số lượng
+    let importedQuantity = parseInt(product.importedQuantity) || 0;
+    let soldQuantity = parseInt(product.soldQuantity) || 0;
+    let remainingQuantity = parseInt(product.remainingQuantity) || 0;
+    // Ưu tiên: nếu nhập importedQuantity và soldQuantity, tính remainingQuantity
+    if (!isNaN(importedQuantity) && !isNaN(soldQuantity)) {
+        remainingQuantity = importedQuantity - soldQuantity;
+    } else if (!isNaN(importedQuantity) && !isNaN(remainingQuantity)) {
+        soldQuantity = importedQuantity - remainingQuantity;
+    } else if (!isNaN(soldQuantity) && !isNaN(remainingQuantity)) {
+        importedQuantity = soldQuantity + remainingQuantity;
+    }
+
+    const query = `UPDATE Products SET name = ?, code = ?, importPrice = ?, salePrice = ?, discountPercent = ?, discountAmount = ?, thumbnail = ?, productImages = ?, description = ?, importedQuantity = ?, soldQuantity = ?, remainingQuantity = ? WHERE id = ?`;
     const params = [
         product.name,
         product.code,
@@ -344,6 +374,10 @@ class Database {
         product.discountAmount,
         product.thumbnail,
         JSON.stringify(product.productImages),
+        product.description || null,
+        importedQuantity,
+        soldQuantity,
+        remainingQuantity,
         product.id
     ];
     try {
@@ -390,8 +424,28 @@ class Database {
             discountPercent FLOAT,
             discountAmount FLOAT,
             thumbnail NVARCHAR(MAX),
-            productImages NVARCHAR(MAX)
+            productImages NVARCHAR(MAX),
+            description NVARCHAR(MAX) NULL,
+            importedQuantity INT DEFAULT 0,
+            soldQuantity INT DEFAULT 0,
+            remainingQuantity INT DEFAULT 0
         )
+    END
+    IF COL_LENGTH('Products', 'description') IS NULL
+    BEGIN
+        ALTER TABLE Products ADD description NVARCHAR(MAX) NULL
+    END
+    IF COL_LENGTH('Products', 'importedQuantity') IS NULL
+    BEGIN
+        ALTER TABLE Products ADD importedQuantity INT DEFAULT 0
+    END
+    IF COL_LENGTH('Products', 'soldQuantity') IS NULL
+    BEGIN
+        ALTER TABLE Products ADD soldQuantity INT DEFAULT 0
+    END
+    IF COL_LENGTH('Products', 'remainingQuantity') IS NULL
+    BEGIN
+        ALTER TABLE Products ADD remainingQuantity INT DEFAULT 0
     END`;
     try {
         await this.sequelize.query(query);

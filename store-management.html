@@ -152,6 +152,24 @@
                         <input type="file" id="productImages" multiple style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                     </div>
 
+                    <div style="margin-bottom: 15px;">
+                        <label for="description" style="display: block; font-weight: bold; margin-bottom: 5px;">Mô tả sản phẩm:</label>
+                        <textarea id="description" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 60px;"></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label for="importedQuantity" style="display: block; font-weight: bold; margin-bottom: 5px;">Số lượng đã nhập:</label>
+                        <input type="number" id="importedQuantity" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;" min="0">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="soldQuantity" style="display: block; font-weight: bold; margin-bottom: 5px;">Số lượng đã bán:</label>
+                        <input type="number" id="soldQuantity" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;" min="0">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="remainingQuantity" style="display: block; font-weight: bold; margin-bottom: 5px;">Số lượng còn lại:</label>
+                        <input type="number" id="remainingQuantity" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;" min="0">
+                    </div>
+
                     <div style="text-align: center;">
                         <button type="button" id="addProduct" style="background-color: #4285f4; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Thêm sản phẩm</button>
                         <button type="button" id="updateProduct" style="background-color: #f4b400; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Sửa sản phẩm</button>
@@ -198,6 +216,10 @@
                 const salePrice = parseFloat(document.getElementById('salePrice').value);
                 const discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
                 const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
+                const description = document.getElementById('description').value.trim();
+                const importedQuantity = parseInt(document.getElementById('importedQuantity').value) || 0;
+                const soldQuantity = parseInt(document.getElementById('soldQuantity').value) || 0;
+                const remainingQuantity = parseInt(document.getElementById('remainingQuantity').value) || 0;
 
                 // Validate input fields
                 if (!name) {
@@ -245,7 +267,11 @@
                     discountPercent,
                     discountAmount,
                     thumbnail: thumbnailPath,
-                    productImages: Array.from(document.getElementById('productImages').files).map(file => file.name)
+                    productImages: Array.from(document.getElementById('productImages').files).map(file => file.name),
+                    description: description || null,
+                    importedQuantity,
+                    soldQuantity,
+                    remainingQuantity
                 };
                 console.log('Product data to add:', product);
                 try {
@@ -325,4 +351,3 @@
     </script>
 </body>
 </html>
-``` 

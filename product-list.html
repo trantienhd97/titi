@@ -40,6 +40,10 @@
                     <th>Giá bán</th>
                     <th>% Giảm giá</th>
                     <th>Tiền giảm giá</th>
+                    <th>Đã nhập</th>
+                    <th>Đã bán</th>
+                    <th>Còn lại</th>
+                    <th>Mô tả</th>
                     <th>Hành động</th>
                 </tr>
             </thead>
@@ -87,6 +91,8 @@
             tr.onclick = function(e) {
                 // Nếu click vào nút Sửa/Xoá thì không chuyển trang
                 if (e.target.closest('button')) return;
+                // Nếu click vào input, select, textarea thì không chuyển trang
+                if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
                 window.location.href = `product-detail.html?id=${encodeURIComponent(product.id)}`;
             };
             if (editingIndex === idx) {
@@ -101,6 +107,10 @@
                     <td><input type="number" value="${product.salePrice || ''}" id="editSalePrice" style="width:100%"></td>
                     <td><input type="number" value="${product.discountPercent || ''}" id="editDiscountPercent" style="width:100%"></td>
                     <td><input type="number" value="${product.discountAmount || ''}" id="editDiscountAmount" style="width:100%"></td>
+                    <td><input type="number" value="${product.importedQuantity ?? 0}" id="editImportedQuantity" style="width:100%"></td>
+                    <td><input type="number" value="${product.soldQuantity ?? 0}" id="editSoldQuantity" style="width:100%" readonly disabled></td>
+                    <td><input type="number" value="${product.remainingQuantity ?? 0}" id="editRemainingQuantity" style="width:100%"></td>
+                    <td><input value="${product.description || ''}" id="editDescription" style="width:100%"></td>
                     <td>
                         <button class="action-btn save" onclick="saveEdit(${idx})">Lưu</button>
                         <button class="action-btn cancel" onclick="cancelEdit()">Huỷ</button>
@@ -129,6 +139,10 @@
                     <td>${product.salePrice || ''}</td>
                     <td>${product.discountPercent || ''}</td>
                     <td>${product.discountAmount || ''}</td>
+                    <td>${product.importedQuantity ?? 0}</td>
+                    <td>${product.soldQuantity ?? 0}</td>
+                    <td>${product.remainingQuantity ?? 0}</td>
+                    <td>${product.description || ''}</td>
                     <td>
                         <button class="action-btn edit" onclick="editProduct(${idx})">Sửa</button>
                         <button class="action-btn delete" onclick="deleteProduct(${idx})">Xoá</button>
@@ -164,6 +178,9 @@
             fs.copyFileSync(file.path, destPath);
             thumbnailPath = `images/${file.name}`;
         }
+        const importedQuantity = parseInt(document.getElementById('editImportedQuantity').value) || 0;
+        const remainingQuantity = parseInt(document.getElementById('editRemainingQuantity').value) || 0;
+        const soldQuantity = importedQuantity - remainingQuantity;
         const updated = {
             ...product,
             name: document.getElementById('editName').value,
@@ -172,13 +189,16 @@
             salePrice: parseFloat(document.getElementById('editSalePrice').value),
             discountPercent: isNaN(discountPercentValue) ? 0 : discountPercentValue,
             discountAmount: isNaN(discountAmountValue) ? 0 : discountAmountValue,
-            thumbnail: thumbnailPath
+            importedQuantity,
+            soldQuantity,
+            remainingQuantity,
+            thumbnail: thumbnailPath,
+            description: document.getElementById('editDescription').value.trim() || null
         };
         const response = await ipcRenderer.invoke('update-product', updated);
         if (response.success) {
-            allProducts[idx] = updated;
             editingIndex = -1;
-            renderProducts(filterProducts(document.getElementById('searchInput').value));
+            await fetchProducts();
         } else {
             alert(response.message || 'Cập nhật thất bại!');
         }
@@ -217,3 +237,4 @@
     </script>
 </body>
 </html>
+``` 

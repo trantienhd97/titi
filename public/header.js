@@ -3,6 +3,14 @@
     // Kiểm tra xem có đang chạy trong Electron hay không
     const isElectron = window.navigator.userAgent.toLowerCase().indexOf('electron') !== -1;
     
+    // Get API config
+    const getApiUrl = (endpoint) => {
+        if (isElectron) {
+            return `http://localhost:3000/api${endpoint}`;
+        }
+        return window.API_CONFIG ? `${window.API_CONFIG.apiURL}${endpoint}` : `/api${endpoint}`;
+    };
+    
     // Tạo HTML cho header
     function createHeader() {
         const headerHTML = `
@@ -87,7 +95,7 @@
                 } else {
                     // Trong browser, gọi API logout
                     try {
-                        await fetch('/api/auth/logout', {
+                        await fetch(getApiUrl('/auth/logout'), {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'

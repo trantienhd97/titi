@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng nhập - titi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TITI - Đăng nhập</title>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -178,10 +179,19 @@
         </div>
     </div>
     
+    <script src="config.js"></script>
     <script>
         // Kiểm tra xem có đang chạy trong Electron hay không
         const isElectron = window.navigator.userAgent.toLowerCase().indexOf('electron') !== -1;
         
+        // Get API URL function
+        const getApiUrl = (endpoint) => {
+            if (isElectron) {
+                return `http://localhost:3000/api${endpoint}`;
+            }
+            return window.API_CONFIG ? `${window.API_CONFIG.apiURL}${endpoint}` : `/api${endpoint}`;
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             // Kiểm tra kết nối server khi trang tải
             if (isElectron) {
@@ -269,7 +279,7 @@
                 } 
                 // Nếu đang trong browser, gọi API trực tiếp
                 else {
-                    const response = await fetch('/api/auth/login', {
+                    const response = await fetch(getApiUrl('/auth/login'), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

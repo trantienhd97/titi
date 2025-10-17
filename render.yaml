@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: titi-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm run web:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_SERVER
+        sync: false
+      - key: DB_NAME
+        value: TitiDB
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://your-firebase-domain.web.app
+    healthCheckPath: /
+    disk:
+      name: titi-storage
+      mountPath: /app/images
+      sizeGB: 1

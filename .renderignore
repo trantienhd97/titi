@@ -1,0 +1,31 @@
+# Electron files (không cần cho web deployment)
+main.js
+*.app
+*.exe
+*.dmg
+dist/
+build/
+
+# Development files
+.env
+.env.local
+.env.development
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+
+# Temporary files
+tmp/
+temp/

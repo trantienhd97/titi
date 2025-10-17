@@ -2,8 +2,8 @@ services:
   - type: web
     name: titi-backend
     env: node
-    buildCommand: npm install
-    startCommand: npm run web:prod
+    buildCommand: npm install --production
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -20,7 +20,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: https://your-firebase-domain.web.app
+        value: https://titi-8b326.web.app,https://titi-8b326.firebaseapp.com
     healthCheckPath: /
     disk:
       name: titi-storage

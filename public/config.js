@@ -5,12 +5,12 @@ const API_CONFIG = {
     apiURL: 'http://localhost:3000/api'
   },
   production: {
-    baseURL: 'https://titi-backend-abc123.onrender.com', // Thay bằng URL thực tế từ Render
+    baseURL: 'https://titi-backend-abc123.onrender.com', // Thay bằng URL backend thực tế từ Render
     apiURL: 'https://titi-backend-abc123.onrender.com/api'
   }
 };
 
-// Detect environment
+// Detect environment - Firebase domain sẽ được coi là production
 const isDevelopment = window.location.hostname === 'localhost' || 
                      window.location.hostname === '127.0.0.1' ||
                      window.location.hostname.includes('localhost');
@@ -24,4 +24,8 @@ window.API_CONFIG = API_CONFIG[environment];
 if (isDevelopment) {
   console.log('🔧 Running in development mode');
   console.log('API URL:', API_CONFIG[environment].apiURL);
+} else {
+  console.log('🚀 Running in production mode');
+  console.log('Frontend:', window.location.origin);
+  console.log('Backend API:', API_CONFIG[environment].apiURL);
 }

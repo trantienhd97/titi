@@ -4,36 +4,19 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "server/**",
+      "database.js",
+      "main.js",
+      "ecosystem.config.js"
     ],
     "rewrites": [
-      {
-        "source": "/api/**",
-        "function": "api"
-      },
       {
         "source": "**",
         "destination": "/index.html"
       }
     ],
     "headers": [
-      {
-        "source": "/api/**",
-        "headers": [
-          {
-            "key": "Access-Control-Allow-Origin",
-            "value": "*"
-          },
-          {
-            "key": "Access-Control-Allow-Methods",
-            "value": "GET,POST,PUT,DELETE,OPTIONS"
-          },
-          {
-            "key": "Access-Control-Allow-Headers",
-            "value": "Content-Type,Authorization"
-          }
-        ]
-      },
       {
         "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|js|css)",
         "headers": [
@@ -42,7 +25,18 @@
             "value": "max-age=31536000"
           }
         ]
+      },
+      {
+        "source": "/config.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
       }
-    ]
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false
   }
 }

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Database Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 30px;
+        }
+        h1 {
+            color: #17a2b8;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .db-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        .btn-danger {
+            background-color: #db4437;
+        }
+        .btn-danger:hover {
+            background-color: #b93125;
+        }
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .btn-warning {
+            background-color: #f4b400;
+        }
+        .btn-warning:hover {
+            background-color: #e09c00;
+        }
+        .filter-container {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            flex-grow: 1;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f1f8fb;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 800px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .modal-body {
+            margin-bottom: 15px;
+        }
+        .back-btn {
+            margin-bottom: 20px;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="window.location.href='main-page.html'">Quay lại Dashboard</button>
+        <h1>Database Viewer</h1>
+        
+        <div id="alertContainer"></div>
+        
+        <div class="controls">
+            <div class="db-selector">
+                <label for="dbSelect">Chọn bảng dữ liệu:</label>
+                <select id="dbSelect">
+                    <option value="users">Users</option>
+                    <option value="products">Products</option>
+                    <option value="orders">Orders</option>
+                    <option value="customers">Customers</option>
+                </select>
+                <button id="loadDbBtn">Tải dữ liệu</button>
+                <button id="backupDbBtn" class="btn-success">Sao lưu</button>
+                <button id="restoreDbBtn" class="btn-warning">Phục hồi</button>
+            </div>
+            <div class="filter-container">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm...">
+                <button id="searchBtn">Tìm</button>
+                <button id="clearBtn">Xoá bộ lọc</button>
+            </div>
+        </div>
+        
+        <div id="dataContainer" class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Dữ liệu</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="btn-group">
+            <button id="addNewBtn">Thêm mới</button>
+            <button id="exportJsonBtn">Xuất JSON</button>
+            <button id="exportCsvBtn">Xuất CSV</button>
+            <button id="importDbBtn">Nhập dữ liệu</button>
+        </div>
+        
+        <!-- JSON Viewer Modal -->
+        <div id="jsonViewerModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Chi tiết dữ liệu</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <pre id="jsonContent"></pre>
+                </div>
+                <div>
+                    <button id="editJsonBtn" class="btn-warning">Sửa</button>
+                    <button id="saveJsonBtn" class="btn-success" style="display: none;">Lưu</button>
+                    <button id="cancelEditBtn" class="btn-danger" style="display: none;">Huỷ</button>
+                    <button id="closeModalBtn">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Record Modal -->
+        <div id="editRecordModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Thêm mới dữ liệu</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <textarea id="recordJson" style="width: 100%; min-height: 300px; font-family: monospace; padding: 10px;"></textarea>
+                </div>
+                <div>
+                    <button id="saveRecordBtn" class="btn-success">Lưu</button>
+                    <button id="closeEditModalBtn">Huỷ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra đăng nhập
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Kiểm tra quyền admin
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (user.role !== 'admin') {
+                showAlert('danger', 'Bạn không có quyền truy cập trang này!');
+                setTimeout(() => {
+                    window.location.href = 'main-page.html';
+                }, 2000);
+                return;
+            }
+            
+            // Variables
+            let currentDbData = [];
+            let editingRecord = null;
+            let filteredData = [];
+            
+            // DOM Elements
+            const dbSelect = document.getElementById('dbSelect');
+            const loadDbBtn = document.getElementById('loadDbBtn');
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const dataTable = document.getElementById('dataTable');
+            const addNewBtn = document.getElementById('addNewBtn');
+            const exportJsonBtn = document.getElementById('exportJsonBtn');
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+            const importDbBtn = document.getElementById('importDbBtn');
+            const backupDbBtn = document.getElementById('backupDbBtn');
+            const restoreDbBtn = document.getElementById('restoreDbBtn');
+            
+            // Modal Elements
+            const jsonViewerModal = document.getElementById('jsonViewerModal');
+            const jsonContent = document.getElementById('jsonContent');
+            const closeModal = jsonViewerModal.querySelector('.close');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const editJsonBtn = document.getElementById('editJsonBtn');
+            const saveJsonBtn = document.getElementById('saveJsonBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            
+            // Edit Record Modal Elements
+            const editRecordModal = document.getElementById('editRecordModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const recordJson = document.getElementById('recordJson');
+            const saveRecordBtn = document.getElementById('saveRecordBtn');
+            const closeEditModal = editRecordModal.querySelector('.close');
+            const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+            
+            // Event Listeners
+            loadDbBtn.addEventListener('click', loadDatabase);
+            searchBtn.addEventListener('click', filterData);
+            clearBtn.addEventListener('click', clearFilter);
+            addNewBtn.addEventListener('click', showAddNewModal);
+            exportJsonBtn.addEventListener('click', exportToJson);
+            exportCsvBtn.addEventListener('click', exportToCsv);
+            importDbBtn.addEventListener('click', importDatabase);
+            backupDbBtn.addEventListener('click', backupDatabase);
+            restoreDbBtn.addEventListener('click', restoreDatabase);
+            
+            // Modal Event Listeners
+            closeModal.addEventListener('click', () => jsonViewerModal.style.display = 'none');
+            closeModalBtn.addEventListener('click', () => jsonViewerModal.style.display = 'none');
+            editJsonBtn.addEventListener('click', editJsonRecord);
+            saveJsonBtn.addEventListener('click', saveJsonRecord);
+            cancelEditBtn.addEventListener('click', cancelEditRecord);
+            
+            // Edit Record Modal Event Listeners
+            closeEditModal.addEventListener('click', () => editRecordModal.style.display = 'none');
+            closeEditModalBtn.addEventListener('click', () => editRecordModal.style.display = 'none');
+            saveRecordBtn.addEventListener('click', saveNewRecord);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === jsonViewerModal) {
+                    jsonViewerModal.style.display = 'none';
+                }
+                if (event.target === editRecordModal) {
+                    editRecordModal.style.display = 'none';
+                }
+            });
+            
+            // Initialize
+            loadDatabase();
+            
+            // Functions
+            function showAlert(type, message, timeout = 5000) {
+                const alertContainer = document.getElementById('alertContainer');
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type}`;
+                alert.textContent = message;
+                
+                alertContainer.appendChild(alert);
+                
+                if (timeout) {
+                    setTimeout(() => {
+                        alertContainer.removeChild(alert);
+                    }, timeout);
+                }
+            }
+            
+            async function loadDatabase() {
+                const dbName = dbSelect.value;
+                try {
+                    const response = await fetch(`/api/database/${dbName}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        currentDbData = result.data || [];
+                        filteredData = [...currentDbData];
+                        renderDataTable(filteredData);
+                        showAlert('success', `Đã tải ${currentDbData.length} bản ghi từ ${dbName}`);
+                    } else {
+                        showAlert('danger', result.message || `Không thể tải dữ liệu từ ${dbName}`);
+                    }
+                } catch (error) {
+                    console.error('Error loading database:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi tải dữ liệu');
+                }
+            }
+            
+            function renderDataTable(data) {
+                const tbody = dataTable.querySelector('tbody');
+                tbody.innerHTML = '';
+                
+                if (data.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="3" style="text-align: center;">Không có dữ liệu</td>';
+                    tbody.appendChild(row);
+                    return;
+                }
+                
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    // Create ID cell
+                    const idCell = document.createElement('td');
+                    idCell.textContent = item.id || '(không có ID)';
+                    row.appendChild(idCell);
+                    
+                    // Create Data preview cell
+                    const dataPreview = document.createElement('td');
+                    let previewContent = '';
+                    
+                    if (item.name) previewContent += `${item.name} `;
+                    if (item.username) previewContent += `(${item.username}) `;
+                    if (item.code) previewContent += `[${item.code}] `;
+                    if (item.email) previewContent += `<${item.email}> `;
+                    
+                    dataPreview.textContent = previewContent || JSON.stringify(item).substring(0, 50) + '...';
+                    row.appendChild(dataPreview);
+                    
+                    // Create Actions cell
+                    const actionsCell = document.createElement('td');
+                    const viewBtn = document.createElement('button');
+                    viewBtn.textContent = 'Xem';
+                    viewBtn.onclick = () => viewRecord(item);
+                    
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Sửa';
+                    editBtn.className = 'btn-warning';
+                    editBtn.style.marginLeft = '10px';
+                    editBtn.onclick = () => editRecord(item);
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Xoá';
+                    deleteBtn.className = 'btn-danger';
+                    deleteBtn.style.marginLeft = '10px';
+                    deleteBtn.onclick = () => deleteRecord(item.id);
+                    
+                    actionsCell.appendChild(viewBtn);
+                    actionsCell.appendChild(editBtn);
+                    actionsCell.appendChild(deleteBtn);
+                    row.appendChild(actionsCell);
+                    
+                    tbody.appendChild(row);
+                });
+            }
+            
+            function viewRecord(record) {
+                jsonContent.textContent = JSON.stringify(record, null, 2);
+                editingRecord = record;
+                jsonContent.contentEditable = false;
+                editJsonBtn.style.display = 'inline-block';
+                saveJsonBtn.style.display = 'none';
+                cancelEditBtn.style.display = 'none';
+                jsonViewerModal.style.display = 'flex';
+            }
+            
+            function editJsonRecord() {
+                jsonContent.contentEditable = true;
+                jsonContent.focus();
+                editJsonBtn.style.display = 'none';
+                saveJsonBtn.style.display = 'inline-block';
+                cancelEditBtn.style.display = 'inline-block';
+            }
+            
+            function cancelEditRecord() {
+                jsonContent.textContent = JSON.stringify(editingRecord, null, 2);
+                jsonContent.contentEditable = false;
+                editJsonBtn.style.display = 'inline-block';
+                saveJsonBtn.style.display = 'none';
+                cancelEditBtn.style.display = 'none';
+            }
+            
+            async function saveJsonRecord() {
+                try {
+                    const updatedData = JSON.parse(jsonContent.textContent);
+                    await updateRecord(updatedData);
+                    
+                    jsonContent.contentEditable = false;
+                    editJsonBtn.style.display = 'inline-block';
+                    saveJsonBtn.style.display = 'none';
+                    cancelEditBtn.style.display = 'none';
+                } catch (error) {
+                    showAlert('danger', 'JSON không hợp lệ! Vui lòng kiểm tra lại.');
+                }
+            }
+            
+            function filterData() {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                if (!searchTerm.trim()) {
+                    filteredData = [...currentDbData];
+                    renderDataTable(filteredData);
+                    return;
+                }
+                
+                filteredData = currentDbData.filter(item => {
+                    const jsonString = JSON.stringify(item).toLowerCase();
+                    return jsonString.includes(searchTerm);
+                });
+                
+                renderDataTable(filteredData);
+                showAlert('success', `Tìm thấy ${filteredData.length} kết quả.`);
+            }
+            
+            function clearFilter() {
+                searchInput.value = '';
+                filteredData = [...currentDbData];
+                renderDataTable(filteredData);
+            }
+            
+            function editRecord(record) {
+                modalTitle.textContent = 'Sửa dữ liệu';
+                recordJson.value = JSON.stringify(record, null, 2);
+                editingRecord = record;
+                editRecordModal.style.display = 'flex';
+            }
+            
+            function showAddNewModal() {
+                modalTitle.textContent = 'Thêm mới dữ liệu';
+                const templateRecord = { id: generateUUID() };
+                recordJson.value = JSON.stringify(templateRecord, null, 2);
+                editingRecord = null;
+                editRecordModal.style.display = 'flex';
+            }
+            
+            async function saveNewRecord() {
+                try {
+                    const data = JSON.parse(recordJson.value);
+                    
+                    if (!data.id) {
+                        data.id = generateUUID();
+                    }
+                    
+                    if (editingRecord) {
+                        // Update existing record
+                        await updateRecord(data);
+                    } else {
+                        // Add new record
+                        await addRecord(data);
+                    }
+                    
+                    editRecordModal.style.display = 'none';
+                } catch (error) {
+                    showAlert('danger', 'JSON không hợp lệ! Vui lòng kiểm tra lại.');
+                }
+            }
+            
+            async function addRecord(data) {
+                const dbName = dbSelect.value;
+                try {
+                    const response = await fetch(`/api/database/${dbName}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ data })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showAlert('success', 'Thêm mới thành công!');
+                        await loadDatabase();
+                    } else {
+                        showAlert('danger', result.message || 'Không thể thêm mới bản ghi');
+                    }
+                } catch (error) {
+                    console.error('Error adding record:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi thêm mới bản ghi');
+                }
+            }
+            
+            async function updateRecord(data) {
+                const dbName = dbSelect.value;
+                try {
+                    const response = await fetch(`/api/database/${dbName}/${data.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ data })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showAlert('success', 'Cập nhật thành công!');
+                        await loadDatabase();
+                    } else {
+                        showAlert('danger', result.message || 'Không thể cập nhật bản ghi');
+                    }
+                } catch (error) {
+                    console.error('Error updating record:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi cập nhật bản ghi');
+                }
+            }
+            
+            async function deleteRecord(id) {
+                if (!confirm('Bạn có chắc chắn muốn xoá bản ghi này?')) return;
+                
+                const dbName = dbSelect.value;
+                try {
+                    const response = await fetch(`/api/database/${dbName}/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showAlert('success', 'Xoá thành công!');
+                        await loadDatabase();
+                    } else {
+                        showAlert('danger', result.message || 'Không thể xoá bản ghi');
+                    }
+                } catch (error) {
+                    console.error('Error deleting record:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi xoá bản ghi');
+                }
+            }
+            
+            function exportToJson() {
+                const dbName = dbSelect.value;
+                const dataStr = JSON.stringify(filteredData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = `${dbName}_export_${formatDate(new Date())}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            }
+            
+            function exportToCsv() {
+                const dbName = dbSelect.value;
+                let csvContent = '';
+                
+                // Get all unique keys
+                const allKeys = new Set();
+                filteredData.forEach(item => {
+                    Object.keys(item).forEach(key => allKeys.add(key));
+                });
+                
+                const headers = Array.from(allKeys);
+                
+                // Add headers
+                csvContent += headers.join(',') + '\n';
+                
+                // Add data rows
+                filteredData.forEach(item => {
+                    const row = headers.map(header => {
+                        let cell = item[header] || '';
+                        
+                        // Handle strings with commas, quotes, or newlines
+                        if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))) {
+                            cell = `"${cell.replace(/"/g, '""')}"`;
+                        }
+                        
+                        // Handle objects and arrays
+                        if (typeof cell === 'object' && cell !== null) {
+                            cell = `"${JSON.stringify(cell).replace(/"/g, '""')}"`;
+                        }
+                        
+                        return cell;
+                    }).join(',');
+                    csvContent += row + '\n';
+                });
+                
+                const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+                const exportFileDefaultName = `${dbName}_export_${formatDate(new Date())}.csv`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            }
+            
+            function importDatabase() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = async function(event) {
+                    const file = event.target.files[0];
+                    
+                    if (!file) return;
+                    
+                    try {
+                        const reader = new FileReader();
+                        reader.onload = async function(e) {
+                            try {
+                                const data = JSON.parse(e.target.result);
+                                
+                                if (!Array.isArray(data)) {
+                                    showAlert('danger', 'File không hợp lệ! Dữ liệu phải là một mảng.');
+                                    return;
+                                }
+                                
+                                if (!confirm(`Bạn có chắc chắn muốn nhập ${data.length} bản ghi? Dữ liệu hiện tại có thể bị mất.`)) return;
+                                
+                                const dbName = dbSelect.value;
+                                const response = await fetch(`/api/database/${dbName}/import`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ data })
+                                });
+                                
+                                const result = await response.json();
+                                
+                                if (result.success) {
+                                    showAlert('success', `Nhập ${data.length} bản ghi thành công!`);
+                                    await loadDatabase();
+                                } else {
+                                    showAlert('danger', result.message || 'Không thể nhập dữ liệu');
+                                }
+                            } catch (error) {
+                                showAlert('danger', 'File JSON không hợp lệ!');
+                            }
+                        };
+                        reader.readAsText(file);
+                    } catch (error) {
+                        console.error('Error importing database:', error);
+                        showAlert('danger', 'Có lỗi xảy ra khi nhập dữ liệu');
+                    }
+                };
+                input.click();
+            }
+            
+            async function backupDatabase() {
+                const dbName = dbSelect.value;
+                try {
+                    const response = await fetch(`/api/database/${dbName}/backup`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showAlert('success', 'Sao lưu dữ liệu thành công!');
+                    } else {
+                        showAlert('danger', result.message || 'Không thể sao lưu dữ liệu');
+                    }
+                } catch (error) {
+                    console.error('Error backing up database:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi sao lưu dữ liệu');
+                }
+            }
+            
+            async function restoreDatabase() {
+                if (!confirm('Bạn có chắc chắn muốn khôi phục dữ liệu từ bản sao lưu gần nhất? Dữ liệu hiện tại sẽ bị ghi đè.')) return;
+                
+                const dbName = dbSelect.value;
+                try {
+                    const response = await fetch(`/api/database/${dbName}/restore`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showAlert('success', 'Khôi phục dữ liệu thành công!');
+                        await loadDatabase();
+                    } else {
+                        showAlert('danger', result.message || 'Không thể khôi phục dữ liệu');
+                    }
+                } catch (error) {
+                    console.error('Error restoring database:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi khôi phục dữ liệu');
+                }
+            }
+            
+            // Helper functions
+            function generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+            
+            function formatDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${year}${month}${day}_${hours}${minutes}`;
+            }
+        });
+    </script>
+</body>
+</html>

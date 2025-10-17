@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách Sản phẩm</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h2 {
+            color: #4285f4;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .back-btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+        .back-btn:hover {
+            background-color: #3367d6;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+        }
+        .search-bar input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        .search-bar button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            background-color: white;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+        .product-info {
+            padding: 15px;
+        }
+        .product-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        .product-category {
+            color: #777;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .product-price {
+            font-weight: bold;
+            color: #4285f4;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .product-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .product-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            flex: 1;
+            margin: 0 5px;
+        }
+        .product-btn.view {
+            background-color: #4285f4;
+            color: white;
+        }
+        .product-btn.view:hover {
+            background-color: #3367d6;
+        }
+        .product-btn.edit {
+            background-color: #f4b400;
+            color: white;
+        }
+        .product-btn.edit:hover {
+            background-color: #e09c00;
+        }
+        .product-btn.delete {
+            background-color: #db4437;
+            color: white;
+        }
+        .product-btn.delete:hover {
+            background-color: #b93125;
+        }
+        .add-product-btn {
+            background-color: #0f9d58;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+        .add-product-btn:hover {
+            background-color: #0b8043;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .pagination button {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .pagination button:hover {
+            background-color: #e0e0e0;
+        }
+        .pagination button.active {
+            background-color: #4285f4;
+            color: white;
+            border-color: #4285f4;
+        }
+        .pagination button:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
+        .no-products {
+            text-align: center;
+            padding: 50px;
+            color: #777;
+            font-size: 18px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #777;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="window.location.href='main-page.html'">Quay lại</button>
+        <h2>Danh sách Sản phẩm</h2>
+        
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Tìm kiếm sản phẩm...">
+            <button onclick="searchProducts()">Tìm kiếm</button>
+        </div>
+        
+        <button class="add-product-btn" onclick="window.location.href='product-detail.html?mode=add'">Thêm Sản phẩm Mới</button>
+        
+        <div id="productList" class="product-grid">
+            <div class="loading">Đang tải danh sách sản phẩm...</div>
+        </div>
+        
+        <div id="pagination" class="pagination">
+            <!-- Nút phân trang sẽ được thêm vào đây -->
+        </div>
+    </div>
+    
+    <script>
+        // Kiểm tra xem có đang chạy trong Electron hay không
+        const isElectron = window.navigator.userAgent.toLowerCase().indexOf('electron') !== -1;
+        
+        let currentPage = 1;
+        let limit = 12;
+        let totalProducts = 0;
+        let searchQuery = '';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra đăng nhập
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Lấy query từ URL nếu có
+            const urlParams = new URLSearchParams(window.location.search);
+            searchQuery = urlParams.get('search') || '';
+            
+            // Đặt giá trị tìm kiếm vào ô input
+            document.getElementById('searchInput').value = searchQuery;
+            
+            // Lấy danh sách sản phẩm
+            fetchProducts();
+            
+            // Xử lý khi nhấn Enter trong ô tìm kiếm
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchProducts();
+                }
+            });
+        });
+        
+        async function fetchProducts() {
+            try {
+                document.getElementById('productList').innerHTML = '<div class="loading">Đang tải danh sách sản phẩm...</div>';
+                
+                let result;
+                
+                // Nếu đang trong Electron, sử dụng ipcRenderer
+                if (isElectron) {
+                    const { ipcRenderer } = require('electron');
+                    result = await ipcRenderer.invoke('get-products');
+                } 
+                // Nếu đang trong browser, gọi API trực tiếp
+                else {
+                    const response = await fetch('/api/products', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    result = await response.json();
+                }
+                
+                if (result.success) {
+                    renderProducts(result.products);
+                    totalProducts = result.products ? result.products.length : 0;
+                    renderPagination();
+                } else {
+                    document.getElementById('productList').innerHTML = `<div class="no-products">${result.message || 'Không thể tải danh sách sản phẩm'}</div>`;
+                }
+            } catch (error) {
+                console.error('Lỗi khi tải danh sách sản phẩm:', error);
+                document.getElementById('productList').innerHTML = '<div class="no-products">Lỗi khi tải danh sách sản phẩm</div>';
+            }
+        }
+        
+        function renderProducts(products) {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+            
+            if (!products || products.length === 0) {
+                productList.innerHTML = '<div class="no-products">Không tìm thấy sản phẩm nào</div>';
+                return;
+            }
+            
+            // Lọc sản phẩm theo từ khóa tìm kiếm nếu có
+            let filteredProducts = products;
+            if (searchQuery) {
+                filteredProducts = products.filter(product => 
+                    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (product.code && product.code.toLowerCase().includes(searchQuery.toLowerCase()))
+                );
+            }
+            
+            // Phân trang
+            const startIndex = (currentPage - 1) * limit;
+            const endIndex = startIndex + limit;
+            const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+            
+            totalProducts = filteredProducts.length;
+            
+            if (paginatedProducts.length === 0) {
+                productList.innerHTML = '<div class="no-products">Không tìm thấy sản phẩm nào</div>';
+                return;
+            }
+            
+            paginatedProducts.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                
+                // Sử dụng placeholder image nếu không có ảnh
+                let imageUrl = 'https://via.placeholder.com/300x200?text=No+Image';
+                
+                if (product.thumbnail && product.thumbnail.trim() !== '') {
+                    if (isElectron) {
+                        // Trong Electron, sử dụng đường dẫn đầy đủ đến server
+                        imageUrl = `http://localhost:3000/images/${product.thumbnail.replace('images/', '')}`;
+                    } else {
+                        // Trong browser, sử dụng đường dẫn tương đối
+                        imageUrl = `/images/${product.thumbnail.replace('images/', '')}`;
+                    }
+                }
+                
+                productCard.innerHTML = `
+                    <img src="${imageUrl}" alt="${product.name}" class="product-image" onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'">
+                    <div class="product-info">
+                        <h3 class="product-title">${product.name}</h3>
+                        <p class="product-category">Mã: ${product.code || 'N/A'}</p>
+                        <p class="product-price">Giá: ${formatCurrency(product.salePrice || 0)}</p>
+                        <p class="product-category">Còn lại: ${product.remainingQuantity || 0}</p>
+                        <div class="product-actions">
+                            <button class="product-btn view" onclick="viewProduct('${product.id}')">Xem</button>
+                            <button class="product-btn edit" onclick="editProduct('${product.id}')">Sửa</button>
+                            <button class="product-btn delete" onclick="deleteProduct('${product.id}')">Xoá</button>
+                        </div>
+                    </div>
+                `;
+                
+                productList.appendChild(productCard);
+            });
+        }
+        
+        function renderPagination() {
+            const paginationDiv = document.getElementById('pagination');
+            paginationDiv.innerHTML = '';
+            
+            const totalPages = Math.ceil(totalProducts / limit);
+            
+            if (totalPages <= 1) {
+                return; // Không hiển thị phân trang nếu chỉ có 1 trang
+            }
+            
+            // Nút trang trước
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Trước';
+            prevButton.disabled = currentPage <= 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    fetchProducts();
+                }
+            });
+            paginationDiv.appendChild(prevButton);
+            
+            // Các nút số trang
+            const maxButtons = 5; // Số nút trang hiển thị tối đa
+            const start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            const end = Math.min(totalPages, start + maxButtons - 1);
+            
+            for (let i = start; i <= end; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.toggle('active', i === currentPage);
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    fetchProducts();
+                });
+                paginationDiv.appendChild(pageButton);
+            }
+            
+            // Nút trang sau
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Sau';
+            nextButton.disabled = currentPage >= totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    fetchProducts();
+                }
+            });
+            paginationDiv.appendChild(nextButton);
+        }
+        
+        function searchProducts() {
+            searchQuery = document.getElementById('searchInput').value.trim();
+            currentPage = 1; // Reset về trang đầu tiên khi tìm kiếm
+            
+            // Cập nhật URL để có thể refresh trang mà vẫn giữ kết quả tìm kiếm
+            const url = new URL(window.location.href);
+            if (searchQuery) {
+                url.searchParams.set('search', searchQuery);
+            } else {
+                url.searchParams.delete('search');
+            }
+            window.history.pushState({}, '', url);
+            
+            fetchProducts();
+        }
+        
+        function viewProduct(productId) {
+            window.location.href = `product-detail.html?id=${productId}&mode=view`;
+        }
+        
+        function editProduct(productId) {
+            window.location.href = `product-detail.html?id=${productId}&mode=edit`;
+        }
+        
+        async function deleteProduct(productId) {
+            if (!confirm('Bạn có chắc chắn muốn xoá sản phẩm này không?')) {
+                return;
+            }
+            
+            try {
+                let result;
+                
+                // Nếu đang trong Electron, sử dụng ipcRenderer
+                if (isElectron) {
+                    const { ipcRenderer } = require('electron');
+                    result = await ipcRenderer.invoke('delete-product', productId);
+                } 
+                // Nếu đang trong browser, gọi API trực tiếp
+                else {
+                    const response = await fetch(`/api/products/${productId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    result = await response.json();
+                }
+                
+                if (result.success) {
+                    // Kiểm tra xem trang hiện tại còn sản phẩm nào không
+                    // Nếu là sản phẩm cuối cùng trên trang và không phải trang đầu tiên
+                    const productsOnCurrentPage = document.querySelectorAll('.product-card').length;
+                    if (productsOnCurrentPage === 1 && currentPage > 1) {
+                        currentPage--; // Quay lại trang trước
+                    }
+                    
+                    fetchProducts();
+                } else {
+                    alert(result.message || 'Không thể xoá sản phẩm!');
+                }
+            } catch (error) {
+                console.error('Lỗi khi xoá sản phẩm:', error);
+                alert('Có lỗi xảy ra khi xoá sản phẩm!');
+            }
+        }
+        
+        // Hàm định dạng tiền tệ
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', { 
+                style: 'currency', 
+                currency: 'VND' 
+            }).format(amount);
+        }
+    </script>
+</body>
+</html>

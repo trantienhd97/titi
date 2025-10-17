@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết Sản phẩm</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 36px 40px;
+        }
+        h2 {
+            color: #17a2b8;
+            text-align: center;
+            letter-spacing: 1px;
+            margin-bottom: 30px;
+        }
+        .product-detail {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        .product-image {
+            flex: 0 0 300px;
+        }
+        .product-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .product-info {
+            flex: 1;
+            min-width: 300px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .info-label {
+            flex: 0 0 150px;
+            font-weight: bold;
+            color: #555;
+        }
+        .info-value {
+            flex: 1;
+        }
+        .back-btn {
+            background: #4285f4;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: #3367d6;
+        }
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .edit-btn {
+            background: #f4b400;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .edit-btn:hover {
+            background: #e09c00;
+        }
+        .delete-btn {
+            background: #db4437;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background: #b93125;
+        }
+        #deleteConfirmModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.3);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 24px 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            min-width: 300px;
+            text-align: center;
+        }
+        .product-image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .gallery-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="window.history.back()">Quay lại</button>
+        <h2>Chi tiết Sản phẩm</h2>
+        <div id="productDetail">
+            <div class="product-detail">
+                <div class="product-image">
+                    <img id="mainImage" src="https://via.placeholder.com/300x300?text=Loading..." alt="Sản phẩm">
+                    <div class="product-image-gallery" id="imageGallery">
+                        <!-- Gallery images will be added here -->
+                    </div>
+                </div>
+                <div class="product-info">
+                    <div class="info-row">
+                        <div class="info-label">Tên sản phẩm:</div>
+                        <div class="info-value" id="productName">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Mã sản phẩm:</div>
+                        <div class="info-value" id="productCode">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Giá nhập:</div>
+                        <div class="info-value" id="importPrice">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Giá bán:</div>
+                        <div class="info-value" id="salePrice">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">% Giảm giá:</div>
+                        <div class="info-value" id="discountPercent">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Tiền giảm giá:</div>
+                        <div class="info-value" id="discountAmount">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Số lượng đã nhập:</div>
+                        <div class="info-value" id="importedQuantity">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Số lượng đã bán:</div>
+                        <div class="info-value" id="soldQuantity">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Số lượng còn lại:</div>
+                        <div class="info-value" id="remainingQuantity">Đang tải...</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Mô tả:</div>
+                        <div class="info-value" id="description">Đang tải...</div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="edit-btn" id="editBtn">Sửa sản phẩm</button>
+                        <button class="delete-btn" id="deleteBtn">Xoá sản phẩm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal">
+        <div class="modal-content">
+            <p style="font-size:18px; margin-bottom:20px;">Bạn có chắc chắn muốn xoá sản phẩm này?</p>
+            <button id="confirmDeleteBtn" style="background:#db4437; color:#fff; padding:8px 20px; border:none; border-radius:4px; margin-right:10px;">Có</button>
+            <button id="cancelDeleteBtn" style="background:#757575; color:#fff; padding:8px 20px; border:none; border-radius:4px;">Không</button>
+        </div>
+    </div>
+
+    <script>
+        // Kiểm tra xem có đang chạy trong Electron hay không
+        const isElectron = window.navigator.userAgent.toLowerCase().indexOf('electron') !== -1;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra đăng nhập
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Lấy ID sản phẩm từ URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (!productId) {
+                alert('Không tìm thấy ID sản phẩm!');
+                window.history.back();
+                return;
+            }
+
+            // Lấy thông tin chi tiết sản phẩm
+            fetchProductDetail(productId);
+
+            // Xử lý nút sửa sản phẩm
+            document.getElementById('editBtn').addEventListener('click', function() {
+                window.location.href = `product-edit.html?id=${productId}`;
+            });
+
+            // Xử lý nút xóa sản phẩm
+            document.getElementById('deleteBtn').addEventListener('click', function() {
+                document.getElementById('deleteConfirmModal').style.display = 'flex';
+            });
+
+            // Xử lý nút hủy xóa
+            document.getElementById('cancelDeleteBtn').addEventListener('click', function() {
+                document.getElementById('deleteConfirmModal').style.display = 'none';
+            });
+
+            // Xử lý nút xác nhận xóa
+            document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+                try {
+                    let result;
+                    
+                    // Nếu đang trong Electron, sử dụng ipcRenderer
+                    if (isElectron) {
+                        const { ipcRenderer } = require('electron');
+                        result = await ipcRenderer.invoke('delete-product', productId);
+                    } 
+                    // Nếu đang trong browser, gọi API trực tiếp
+                    else {
+                        const response = await fetch(`/api/products/${productId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        result = await response.json();
+                    }
+
+                    if (result.success) {
+                        alert('Sản phẩm đã được xóa thành công!');
+                        window.location.href = 'product-list.html';
+                    } else {
+                        alert(result.message || 'Xóa sản phẩm thất bại!');
+                    }
+
+                    document.getElementById('deleteConfirmModal').style.display = 'none';
+                } catch (error) {
+                    console.error('Lỗi khi xóa sản phẩm:', error);
+                    alert('Có lỗi xảy ra khi xóa sản phẩm!');
+                    document.getElementById('deleteConfirmModal').style.display = 'none';
+                }
+            });
+        });
+
+        async function fetchProductDetail(productId) {
+            try {
+                let result;
+                
+                // Nếu đang trong Electron, sử dụng ipcRenderer
+                if (isElectron) {
+                    const { ipcRenderer } = require('electron');
+                    // Lấy tất cả sản phẩm rồi tìm sản phẩm theo ID
+                    const productsResult = await ipcRenderer.invoke('get-products');
+                    
+                    if (productsResult.success && productsResult.products) {
+                        const product = productsResult.products.find(p => p.id === productId);
+                        if (product) {
+                            result = { success: true, product: product };
+                        } else {
+                            result = { success: false, message: 'Không tìm thấy sản phẩm' };
+                        }
+                    } else {
+                        result = { success: false, message: 'Không thể lấy danh sách sản phẩm' };
+                    }
+                } 
+                // Nếu đang trong browser, gọi API trực tiếp
+                else {
+                    const response = await fetch(`/api/products/${productId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    result = await response.json();
+                }
+
+                if (result.success && result.product) {
+                    const product = result.product;
+                    
+                    // Hiển thị thông tin sản phẩm
+                    document.getElementById('productName').textContent = product.name || '';
+                    document.getElementById('productCode').textContent = product.code || '';
+                    document.getElementById('importPrice').textContent = formatCurrency(product.importPrice || 0);
+                    document.getElementById('salePrice').textContent = formatCurrency(product.salePrice || 0);
+                    document.getElementById('discountPercent').textContent = (product.discountPercent || 0) + '%';
+                    document.getElementById('discountAmount').textContent = formatCurrency(product.discountAmount || 0);
+                    document.getElementById('importedQuantity').textContent = product.importedQuantity || '0';
+                    document.getElementById('soldQuantity').textContent = product.soldQuantity || '0';
+                    document.getElementById('remainingQuantity').textContent = product.remainingQuantity || '0';
+                    document.getElementById('description').textContent = product.description || 'Không có mô tả';
+
+                    // Hiển thị ảnh sản phẩm
+                    if (product.thumbnail && product.thumbnail.trim() !== '') {
+                        let imageUrl;
+                        if (isElectron) {
+                            // Trong Electron, sử dụng đường dẫn đầy đủ đến server
+                            imageUrl = `http://localhost:3000/images/${product.thumbnail.replace('images/', '')}`;
+                        } else {
+                            // Trong browser, sử dụng đường dẫn tương đối
+                            imageUrl = `/images/${product.thumbnail.replace('images/', '')}`;
+                        }
+                        document.getElementById('mainImage').src = imageUrl;
+                    } else {
+                        document.getElementById('mainImage').src = 'https://via.placeholder.com/300x300?text=No+Image';
+                    }
+
+                    // Hiển thị gallery ảnh nếu có
+                    const gallery = document.getElementById('imageGallery');
+                    gallery.innerHTML = '';
+
+                    if (product.productImages) {
+                        let images = [];
+                        try {
+                            // Kiểm tra nếu productImages là string JSON
+                            images = typeof product.productImages === 'string' 
+                                ? JSON.parse(product.productImages) 
+                                : product.productImages;
+                        } catch (e) {
+                            console.warn('Không thể parse productImages:', e);
+                            images = [];
+                        }
+
+                        if (Array.isArray(images) && images.length > 0) {
+                            images.forEach((image, index) => {
+                                const img = document.createElement('img');
+                                let imageUrl;
+                                if (isElectron) {
+                                    imageUrl = `http://localhost:3000/images/${image.replace('images/', '')}`;
+                                } else {
+                                    imageUrl = `/images/${image.replace('images/', '')}`;
+                                }
+                                img.src = imageUrl;
+                                img.alt = `${product.name} - Ảnh ${index + 1}`;
+                                img.className = 'gallery-image';
+                                img.onclick = function() {
+                                    document.getElementById('mainImage').src = imageUrl;
+                                };
+                                gallery.appendChild(img);
+                            });
+                        }
+                    }
+                } else {
+                    alert('Không tìm thấy thông tin sản phẩm!');
+                    window.history.back();
+                }
+            } catch (error) {
+                console.error('Lỗi khi lấy thông tin sản phẩm:', error);
+                alert('Có lỗi xảy ra khi lấy thông tin sản phẩm!');
+            }
+        }
+        
+        // Hàm định dạng tiền tệ
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', { 
+                style: 'currency', 
+                currency: 'VND' 
+            }).format(amount);
+        }
+    </script>
+</body>
+</html>

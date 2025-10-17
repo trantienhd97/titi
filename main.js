@@ -1,322 +1,437 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, session, dialog } = require('electron');
 const path = require('path');
 const url = require('url');
-const database = require('./database');
-const crypto = require('crypto');
-require('electron-reload')(__dirname);
+const fetch = require('electron-fetch').default;
+const fs = require('fs');
 
-// Giữ một tham chiếu toàn cục đến cửa sổ, nếu không thì cửa sổ 
-// sẽ tự động đóng khi đối tượng JavaScript bị thu gom rác
+// Tắt thông báo lỗi liên quan đến mach port
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+app.commandLine.appendSwitch('disable-features', 'HardwareMediaKeyHandling');
+app.disableHardwareAcceleration();
+
+// Cấu hình API server
+const API_BASE_URL = process.env.API_URL || 'http://localhost:3000/api';
 let mainWindow;
 let currentUser = null;
+let authToken = null;
+let isServerConnected = false;
 
-// Hàm để mã hóa mật khẩu
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
+// Hàm kiểm tra kết nối đến server
+async function checkServerConnection() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(`${API_BASE_URL.split('/api')[0]}/`, {
+      method: 'GET',
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    isServerConnected = response.ok;
+    return isServerConnected;
+  } catch (error) {
+    console.error('Lỗi kết nối đến server:', error);
+    isServerConnected = false;
+    return false;
+  }
 }
 
 function createWindow() {
-  // Tạo cửa sổ trình duyệt
+  // Tạo cửa sổ trình duyệt.
   mainWindow = new BrowserWindow({
-    width: 1024,
-    height: 768,
+    width: 1200,
+    height: 800,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true
-    },
-    title: 'titi'
+      enableRemoteModule: true,
+      webSecurity: false // Thêm để cho phép load ảnh từ local server
+    }
   });
 
-  // Load trang đăng nhập
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'login.html'),
-    protocol: 'file:',
-    slashes: true
-  }));
-
-  // Mở DevTools khi phát triển
-  if (process.argv.includes('--dev')) {
+  // Tải trang đăng nhập
+  mainWindow.loadFile('public/index.html');
+  
+  // Mở DevTools nếu đang trong môi trường dev
+  if (process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
   }
 
-  // Xử lý sự kiện khi cửa sổ bị đóng
+  // Xử lý khi cửa sổ đóng
   mainWindow.on('closed', function () {
     mainWindow = null;
   });
 }
 
-// Phương thức này sẽ được gọi khi Electron hoàn tất
-// khởi tạo và sẵn sàng tạo cửa sổ trình duyệt.
-app.on('ready', createWindow);
+// Khi app đã sẵn sàng
+app.whenReady().then(async () => {
+  // Kiểm tra kết nối đến server trước khi tạo cửa sổ
+  try {
+    const serverConnected = await checkServerConnection();
+    if (!serverConnected) {
+      dialog.showErrorBox(
+        'Lỗi kết nối server',
+        'Không thể kết nối đến máy chủ. Vui lòng đảm bảo server đang chạy tại địa chỉ ' + 
+        API_BASE_URL.split('/api')[0] + ' và thử lại.\n\n' +
+        'Bạn có thể khởi động server bằng cách mở một cửa sổ Terminal và chạy lệnh:\nnode server.js'
+      );
+    }
+  } catch (error) {
+    console.error('Lỗi kiểm tra kết nối:', error);
+  }
+  
+  createWindow();
 
-// Thoát khi tất cả cửa sổ đã đóng.
+  app.on('activate', function () {
+    // Trên macOS, tạo lại cửa sổ khi icon được click
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+// Khi tất cả cửa sổ đóng, thoát ứng dụng
 app.on('window-all-closed', function () {
-  // Trên macOS, các ứng dụng và thanh menu của chúng thường
-  // vẫn hoạt động cho đến khi người dùng thoát
-  // rõ ràng bằng Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
+  if (process.platform !== 'darwin') app.quit();
+});
+
+// XỬ LÝ CÁC SỰ KIỆN IPC GIỮA RENDERER VÀ MAIN PROCESS
+
+// Thêm hàm xử lý lỗi kết nối
+async function handleApiRequest(apiFunction, errorMessage) {
+  if (!isServerConnected) {
+    // Thử kết nối lại nếu trước đó không kết nối được
+    isServerConnected = await checkServerConnection();
   }
-});
-
-app.on('activate', function () {
-  // Trên macOS, việc tạo lại cửa sổ trong ứng dụng khi
-  // biểu tượng dock được nhấp và không có cửa sổ nào khác mở.
-  if (mainWindow === null) {
-    createWindow();
-  }
-});
-
-// IPC để xử lý đăng ký tài khoản
-ipcMain.on('register', async (event, userData) => {
-  try {
-    // Mã hóa mật khẩu trước khi lưu vào database
-    const hashedPassword = hashPassword(userData.password);
-    
-    // Kết nối đến cơ sở dữ liệu với thông tin từ form
-    if (!database.isConnected) {
-      const dbConfig = userData.dbConfig || {
-        server: 'localhost',
-        database: 'TitiDB',
-        username: 'sa',
-        password: 'YourStrong@Passw0rd'
-      };
-      
-      const connected = await database.connect(dbConfig);
-      
-      if (!connected) {
-        event.reply('register-response', { 
-          success: false, 
-          message: 'Không thể kết nối đến SQL Server. Vui lòng kiểm tra thông tin kết nối.' 
-        });
-        return;
-      }
-    }
-    
-    // Tạo người dùng mới trong cơ sở dữ liệu
-    const result = await database.createUser(userData.username, hashedPassword, userData.fullName);
-    event.reply('register-response', result);
-  } catch (error) {
-    console.error('Lỗi đăng ký:', error);
-    event.reply('register-response', { 
-      success: false, 
-      message: 'Có lỗi xảy ra khi đăng ký: ' + error.message 
-    });
-  }
-});
-
-// IPC để xử lý đăng nhập
-ipcMain.on('login', async (event, credentials) => {
-  try {
-    // Kết nối đến cơ sở dữ liệu với thông tin từ form
-    if (!database.isConnected) {
-      const dbConfig = credentials.dbConfig || {
-        server: 'localhost',
-        database: 'TitiDB',
-        username: 'sa',
-        password: 'YourStrong@Passw0rd'
-      };
-      
-      const connected = await database.connect(dbConfig);
-      
-      if (!connected) {
-        event.reply('login-response', { 
-          success: false, 
-          message: 'Không thể kết nối đến SQL Server. Vui lòng kiểm tra thông tin kết nối.' 
-        });
-        return;
-      }
-    }
-    
-    // Mã hóa mật khẩu để so sánh
-    const hashedPassword = hashPassword(credentials.password);
-    
-    // Xác thực với database
-    const result = await database.authenticate(credentials.username, hashedPassword);
-    
-    if (result.success) {
-      // Lưu thông tin người dùng hiện tại
-      currentUser = result.user;
-      
-      // Mở cửa sổ chính sau khi đăng nhập thành công
-      mainWindow.loadURL(url.format({
-        pathname: path.join(__dirname, 'main-page.html'),
-        protocol: 'file:',
-        slashes: true
-      }));
-      
-      event.reply('login-response', { success: true });
-    } else {
-      event.reply('login-response', { 
-        success: false, 
-        message: result.message || 'Đăng nhập không thành công'
-      });
-    }
-  } catch (error) {
-    console.error('Lỗi đăng nhập:', error);
-    event.reply('login-response', { 
-      success: false, 
-      message: 'Có lỗi xảy ra khi đăng nhập: ' + error.message
-    });
-  }
-});
-
-// IPC để xử lý đăng xuất
-ipcMain.on('logout', async (event) => {
-  try {
-    // Đóng kết nối database
-    if (database.isConnected) {
-      await database.disconnect();
-    }
-    
-    // Đặt lại thông tin người dùng
-    currentUser = null;
-    
-    // Quay lại trang đăng nhập
-    mainWindow.loadURL(url.format({
-      pathname: path.join(__dirname, 'login.html'),
-      protocol: 'file:',
-      slashes: true
-    }));
-  } catch (error) {
-    console.error('Lỗi đăng xuất:', error);
-  }
-});
-
-// IPC để lấy thông tin người dùng hiện tại
-ipcMain.on('get-current-user', (event) => {
-  event.reply('current-user', currentUser);
-});
-
-// IPC để lấy tất cả tài khoản
-ipcMain.on('get-all-accounts', async (event) => {
-  try {
-    if (database.isConnected) {
-      const accounts = await database.getAllUsers();
-      event.reply('all-accounts', accounts);
-    } else {
-      event.reply('all-accounts', []);
-    }
-  } catch (error) {
-    console.error('Lỗi khi lấy danh sách tài khoản:', error);
-    event.reply('all-accounts', []);
-  }
-});
-
-// IPC để điều hướng đến trang accounts.html
-ipcMain.on('go-to-accounts', (event) => {
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'accounts.html'),
-    protocol: 'file:',
-    slashes: true
-  }));
-});
-
-// IPC để điều hướng đến trang main-page.html
-ipcMain.on('go-to-main', (event) => {
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'main-page.html'),
-    protocol: 'file:',
-    slashes: true
-  }));
-});
-
-// IPC để lấy tất cả bảng trong cơ sở dữ liệu
-ipcMain.on('get-all-tables', async (event) => {
-  try {
-    const result = await database.getAllTables();
-    event.reply('get-all-tables-response', result);
-  } catch (error) {
-    console.error('Lỗi khi lấy danh sách bảng:', error);
-    event.reply('get-all-tables-response', {
+  
+  if (!isServerConnected) {
+    return {
       success: false,
-      message: 'Có lỗi xảy ra khi lấy danh sách bảng.'
-    });
+      message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra server và khởi động lại ứng dụng.',
+      serverError: true
+    };
   }
-});
-
-// IPC để lấy cấu trúc của một bảng
-ipcMain.on('get-table-structure', async (event, tableName) => {
+  
   try {
-    const result = await database.getTableStructure(tableName);
-    event.reply('get-table-structure-response', {
-      ...result,
-      tableName
-    });
+    return await apiFunction();
   } catch (error) {
-    console.error(`Lỗi khi lấy cấu trúc bảng ${tableName}:`, error);
-    event.reply('get-table-structure-response', {
-      success: false,
-      message: `Có lỗi xảy ra khi lấy cấu trúc bảng ${tableName}.`
-    });
-  }
-});
-
-// IPC để điều hướng đến trang database-viewer.html
-ipcMain.on('go-to-database-viewer', (event) => {
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'database-viewer.html'),
-    protocol: 'file:',
-    slashes: true
-  }));
-});
-
-// IPC để điều hướng đến trang quản lý cửa hàng
-ipcMain.on('go-to-store-management', (event) => {
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'store-management.html'),
-    protocol: 'file:',
-    slashes: true
-  }));
-});
-
-ipcMain.handle('add-product', async (event, product) => {
-    try {
-        await database.addProductToDatabase(product);
-        return { success: true, message: 'Sản phẩm đã được thêm vào cơ sở dữ liệu.' };
-    } catch (error) {
-        console.error('Error in add-product handler:', error);
-        return { success: false, message: 'Không thể thêm sản phẩm. Vui lòng thử lại!' };
+    console.error(errorMessage, error);
+    
+    // Kiểm tra xem lỗi có phải do kết nối không
+    if (error.name === 'AbortError' || error.code === 'ECONNREFUSED' || error.type === 'system' || error.code === 'ENOTFOUND') {
+      isServerConnected = false;
+      return {
+        success: false,
+        message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra server và thử lại.',
+        serverError: true
+      };
     }
+    
+    return {
+      success: false,
+      message: errorMessage
+    };
+  }
+}
+
+// Xử lý sự kiện đăng nhập
+ipcMain.handle('login', async (event, credentials) => {
+  return handleApiRequest(async () => {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(credentials)
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      authToken = data.token;
+      currentUser = data.user;
+      return { success: true, user: currentUser };
+    } else {
+      return { success: false, message: data.message || 'Đăng nhập thất bại' };
+    }
+  }, 'Đã xảy ra lỗi khi đăng nhập');
 });
 
+// Xử lý sự kiện đăng ký
+ipcMain.handle('register', async (event, userData) => {
+  return handleApiRequest(async () => {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userData)
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Đã xảy ra lỗi khi đăng ký');
+});
+
+// Xử lý sự kiện lấy danh sách sản phẩm
 ipcMain.handle('get-products', async () => {
-    try {
-        const products = await database.getAllProducts();
-        return { success: true, products };
-    } catch (error) {
-        console.error('Error in get-products handler:', error);
-        return { success: false, message: 'Không thể lấy danh sách sản phẩm. Vui lòng thử lại!' };
+  return handleApiRequest(async () => {
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Đã xảy ra lỗi khi lấy danh sách sản phẩm');
+});
+
+// Xử lý sự kiện thêm sản phẩm
+ipcMain.handle('add-product', async (event, productData) => {
+  return handleApiRequest(async () => {
+    if (!authToken) {
+      return { success: false, message: 'Không có quyền truy cập' };
     }
+    
+    // Xử lý thumbnail nếu có
+    let formData = new FormData();
+    
+    // Thêm các trường dữ liệu vào form
+    Object.keys(productData).forEach(key => {
+      if (key !== 'thumbnailPath') {
+        formData.append(key, productData[key]);
+      }
+    });
+    
+    // Xử lý file thumbnail nếu có
+    if (productData.thumbnailPath) {
+      const fileBuffer = fs.readFileSync(productData.thumbnailPath);
+      const fileName = path.basename(productData.thumbnailPath);
+      formData.append('thumbnail', new Blob([fileBuffer]), fileName);
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: formData
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Đã xảy ra lỗi khi thêm sản phẩm');
 });
 
+// Xử lý sự kiện cập nhật sản phẩm
+ipcMain.handle('update-product', async (event, productData) => {
+  return handleApiRequest(async () => {
+    const productId = productData.id;
+    delete productData.id;
+    
+    console.log('Updating product with data:', productData);
+    
+    // Trong Node.js/Electron, chúng ta cần sử dụng form-data package thay vì FormData
+    const FormData = require('form-data');
+    let formData = new FormData();
+    
+    // Thêm các trường dữ liệu vào form
+    Object.keys(productData).forEach(key => {
+      if (key !== 'thumbnailPath' && productData[key] !== undefined && productData[key] !== null) {
+        formData.append(key, productData[key].toString());
+      }
+    });
+    
+    // Xử lý file thumbnail nếu có
+    if (productData.thumbnailPath) {
+      try {
+        if (fs.existsSync(productData.thumbnailPath)) {
+          const fileName = path.basename(productData.thumbnailPath);
+          formData.append('thumbnail', fs.createReadStream(productData.thumbnailPath), fileName);
+        } else {
+          console.warn('File thumbnail không tồn tại:', productData.thumbnailPath);
+        }
+      } catch (error) {
+        console.warn('Không thể đọc file thumbnail:', error);
+      }
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      method: 'PUT',
+      body: formData,
+      headers: formData.getHeaders()
+    });
+    
+    const data = await response.json();
+    console.log('Update response:', data);
+    return data;
+  }, 'Đã xảy ra lỗi khi cập nhật sản phẩm');
+});
+
+// Xử lý sự kiện xóa sản phẩm
 ipcMain.handle('delete-product', async (event, productId) => {
-  try {
-    const db = require('./database.js');
-    await db.deleteProductFromDatabase(productId);
-    return { success: true };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
+  return handleApiRequest(async () => {
+    if (!authToken) {
+      return { success: false, message: 'Không có quyền truy cập' };
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Đã xảy ra lỗi khi xóa sản phẩm');
 });
 
-ipcMain.handle('update-product', async (event, product) => {
-  try {
-    await database.updateProductInDatabase(product);
-    return { success: true };
-  } catch (error) {
-    return { success: false, message: error.message };
-  }
+// Xử lý sự kiện lấy danh sách người dùng
+ipcMain.handle('get-users', async () => {
+  return handleApiRequest(async () => {
+    if (!authToken) {
+      return { success: false, message: 'Không có quyền truy cập' };
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/auth/all-users`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Đã xảy ra lỗi khi lấy danh sách người dùng');
 });
 
-ipcMain.handle('get-product-detail', async (event, productId) => {
-  try {
-    const products = await database.getAllProducts();
-    const product = products.find(p => p.id == productId);
-    if (product) return { success: true, product };
-    return { success: false, message: 'Không tìm thấy sản phẩm' };
-  } catch (error) {
-    return { success: false, message: error.message };
+// Các hàm xử lý database
+ipcMain.handle('get-database-info', async () => {
+  return handleApiRequest(async () => {
+    if (!authToken) {
+      return { success: false, message: 'Không có quyền truy cập' };
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/database/info`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Lỗi lấy thông tin database');
+});
+
+ipcMain.handle('get-database-tables', async () => {
+  return handleApiRequest(async () => {
+    if (!authToken) {
+      return { success: false, message: 'Không có quyền truy cập' };
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/database/tables`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Lỗi lấy danh sách bảng');
+});
+
+ipcMain.handle('get-table-details', async (event, tableName) => {
+  return handleApiRequest(async () => {
+    if (!authToken) {
+      return { success: false, message: 'Không có quyền truy cập' };
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/database/tables/${tableName}`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Lỗi lấy chi tiết bảng');
+});
+
+ipcMain.handle('execute-query', async (event, query) => {
+  return handleApiRequest(async () => {
+    if (!authToken) {
+      return { success: false, message: 'Không có quyền truy cập' };
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/database/execute-query`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ query })
+    });
+    
+    const data = await response.json();
+    return data;
+  }, 'Lỗi thực thi truy vấn');
+});
+
+// Thêm hàm kiểm tra kết nối server và hiển thị thông báo
+ipcMain.handle('check-server-connection', async () => {
+  const wasConnected = isServerConnected;
+  const isNowConnected = await checkServerConnection();
+  
+  if (!wasConnected && isNowConnected) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Kết nối thành công',
+      message: 'Đã kết nối được đến máy chủ.',
+      buttons: ['OK']
+    });
+  } else if (!isNowConnected) {
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: 'Lỗi kết nối server',
+      message: 'Không thể kết nối đến máy chủ. Vui lòng đảm bảo server đang chạy tại địa chỉ ' + 
+        API_BASE_URL.split('/api')[0],
+      buttons: ['Thử lại', 'Mở Terminal', 'Đóng'],
+      defaultId: 0,
+      cancelId: 2
+    });
+    
+    if (result.response === 0) {
+      // Thử kết nối lại
+      return ipcMain.emit('check-server-connection');
+    } else if (result.response === 1) {
+      // Mở Terminal để chạy lệnh khởi động server
+      const terminalCommand = process.platform === 'darwin' ? 'open -a Terminal .' : 'start cmd';
+      require('child_process').exec(terminalCommand);
+    }
   }
+  
+  return { connected: isServerConnected };
+});
+
+// Thêm hàm xử lý lỗi kết nối chung cho ứng dụng
+ipcMain.handle('handle-server-error', async (event, errorData) => {
+  if (errorData && errorData.serverError) {
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: 'Lỗi kết nối server',
+      message: errorData.message || 'Không thể kết nối đến máy chủ.',
+      buttons: ['Thử kết nối lại', 'Đóng'],
+      defaultId: 0,
+      cancelId: 1
+    });
+    
+    if (result.response === 0) {
+      // Thử kết nối lại và trả về kết quả
+      await checkServerConnection();
+      return { connected: isServerConnected };
+    }
+  }
+  
+  return { connected: isServerConnected };
 });

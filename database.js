@@ -150,14 +150,21 @@ class Database {
    */
   async authenticate(username, password) {
     try {
+      const bcrypt = require('bcrypt');
+      
+      // Tìm user theo username
       const user = await this.models.User.findOne({
-        where: {
-          username,
-          password
-        }
+        where: { username }
       });
       
-      if (user) {
+      if (!user) {
+        return { success: false, message: 'Tên đăng nhập hoặc mật khẩu không đúng' };
+      }
+      
+      // So sánh mật khẩu sử dụng bcrypt
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      
+      if (isPasswordValid) {
         return { 
           success: true, 
           user: { 
@@ -351,40 +358,68 @@ class Database {
    * @param {Object} product - Thông tin sản phẩm
    */
   async updateProductInDatabase(product) {
-    // Tính toán lại các trường số lượng
-    let importedQuantity = parseInt(product.importedQuantity) || 0;
-    let soldQuantity = parseInt(product.soldQuantity) || 0;
-    let remainingQuantity = parseInt(product.remainingQuantity) || 0;
-    // Ưu tiên: nếu nhập importedQuantity và soldQuantity, tính remainingQuantity
-    if (!isNaN(importedQuantity) && !isNaN(soldQuantity)) {
-        remainingQuantity = importedQuantity - soldQuantity;
-    } else if (!isNaN(importedQuantity) && !isNaN(remainingQuantity)) {
-        soldQuantity = importedQuantity - remainingQuantity;
-    } else if (!isNaN(soldQuantity) && !isNaN(remainingQuantity)) {
-        importedQuantity = soldQuantity + remainingQuantity;
-    }
-
-    const query = `UPDATE Products SET name = ?, code = ?, importPrice = ?, salePrice = ?, discountPercent = ?, discountAmount = ?, thumbnail = ?, productImages = ?, description = ?, importedQuantity = ?, soldQuantity = ?, remainingQuantity = ? WHERE id = ?`;
-    const params = [
-        product.name,
-        product.code,
-        product.importPrice,
-        product.salePrice,
-        product.discountPercent,
-        product.discountAmount,
-        product.thumbnail,
-        JSON.stringify(product.productImages),
-        product.description || null,
-        importedQuantity,
-        soldQuantity,
-        remainingQuantity,
-        product.id
-    ];
     try {
-        console.log('Executing query:', query);
-        console.log('With parameters:', params);
-        await this.sequelize.query(query, { replacements: params });
-        console.log('Product updated in database successfully');
+      // Kiểm tra xem sản phẩm có ID không
+      if (!product.id) {
+        throw new Error('Product ID is required for update');
+      }
+
+      // Tính toán lại các trường số lượng
+      let importedQuantity = parseInt(product.importedQuantity) || 0;
+      let soldQuantity = parseInt(product.soldQuantity) || 0;
+      let remainingQuantity = parseInt(product.remainingQuantity) || 0;
+      
+      // Ưu tiên: nếu nhập importedQuantity và soldQuantity, tính remainingQuantity
+      if (!isNaN(importedQuantity) && !isNaN(soldQuantity)) {
+          remainingQuantity = importedQuantity - soldQuantity;
+      } else if (!isNaN(importedQuantity) && !isNaN(remainingQuantity)) {
+          soldQuantity = importedQuantity - remainingQuantity;
+      } else if (!isNaN(soldQuantity) && !isNaN(remainingQuantity)) {
+          importedQuantity = soldQuantity + remainingQuantity;
+      }
+
+      // Chuẩn bị dữ liệu an toàn
+      const params = [
+          product.name || '',
+          product.code || '',
+          parseFloat(product.importPrice) || 0,
+          parseFloat(product.salePrice) || 0,
+          parseFloat(product.discountPercent) || 0,
+          parseFloat(product.discountAmount) || 0,
+          product.thumbnail || null,
+          product.productImages ? JSON.stringify(product.productImages) : null,
+          product.description || null,
+          importedQuantity,
+          soldQuantity,
+          remainingQuantity,
+          product.id
+      ];
+
+      const query = `UPDATE Products SET 
+        name = ?, 
+        code = ?, 
+        importPrice = ?, 
+        salePrice = ?, 
+        discountPercent = ?, 
+        discountAmount = ?, 
+        thumbnail = ?, 
+        productImages = ?, 
+        description = ?, 
+        importedQuantity = ?, 
+        soldQuantity = ?, 
+        remainingQuantity = ? 
+        WHERE id = ?`;
+
+      console.log('Executing query:', query);
+      console.log('With parameters:', params);
+      
+      const [results, metadata] = await this.sequelize.query(query, { 
+        replacements: params,
+        type: this.sequelize.QueryTypes.UPDATE
+      });
+      
+      console.log('Product updated in database successfully');
+      return { success: true, affectedRows: metadata };
     } catch (error) {
         console.error('Error updating product in database:', error);
         throw new Error(`Failed to update product: ${error.message}`);

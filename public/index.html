@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập - titi</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo {
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #4285f4;
+            font-size: 48px;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        .logo p {
+            color: #5f6368;
+            margin-top: 5px;
+            font-size: 18px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .form-group label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            color: #5f6368;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        .form-group input:focus {
+            border-color: #4285f4;
+            outline: none;
+        }
+        .login-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        .login-btn:hover {
+            background: #3367d6;
+        }
+        .register-link {
+            margin-top: 20px;
+            color: #5f6368;
+            font-size: 14px;
+        }
+        .register-link a {
+            color: #4285f4;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .server-status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .server-offline {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .server-online {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .retry-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .retry-button:hover {
+            background: #5a6268;
+        }
+        
+        .version {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>titi</h1>
+            <p>Hệ thống quản lý</p>
+        </div>
+        
+        <div class="error-message" id="error-message"></div>
+        <div id="server-status" class="server-status" style="display: none;"></div>
+        
+        <form id="login-form" onsubmit="login(event)">
+            <div class="form-group">
+                <label for="username">Tên đăng nhập</label>
+                <input type="text" id="username" name="username" required autofocus>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="login-btn">Đăng nhập</button>
+        </form>
+        
+        <div class="register-link">
+            Chưa có tài khoản? <a href="register.html">Đăng ký</a>
+        </div>
+        
+        <div class="version">
+            Phiên bản 2.0 - Web & App
+        </div>
+    </div>
+    
+    <script>
+        // Kiểm tra xem có đang chạy trong Electron hay không
+        const isElectron = window.navigator.userAgent.toLowerCase().indexOf('electron') !== -1;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra kết nối server khi trang tải
+            if (isElectron) {
+                const { ipcRenderer } = require('electron');
+                checkServerConnection();
+            }
+            
+            // Kiểm tra nếu đã đăng nhập thì chuyển hướng đến trang chính
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.href = 'main-page.html';
+            }
+        });
+        
+        async function checkServerConnection() {
+            if (!isElectron) return true;
+            
+            try {
+                const { ipcRenderer } = require('electron');
+                const result = await ipcRenderer.invoke('check-server-connection');
+                updateServerStatus(result.connected);
+                return result.connected;
+            } catch (error) {
+                console.error('Lỗi kiểm tra kết nối server:', error);
+                updateServerStatus(false);
+                return false;
+            }
+        }
+        
+        function updateServerStatus(isConnected) {
+            const statusElement = document.getElementById('server-status');
+            if (!statusElement) return;
+            
+            if (isConnected) {
+                statusElement.className = 'server-status server-online';
+                statusElement.innerHTML = 'Máy chủ đang hoạt động';
+                statusElement.style.display = 'none'; // Ẩn khi server online
+            } else {
+                statusElement.className = 'server-status server-offline';
+                statusElement.innerHTML = 'Không thể kết nối đến máy chủ<br>' +
+                    '<button class="retry-button" onclick="retryConnection()">Thử kết nối lại</button>';
+                statusElement.style.display = 'block';
+            }
+        }
+        
+        async function retryConnection() {
+            if (!isElectron) return;
+            
+            const statusElement = document.getElementById('server-status');
+            statusElement.innerHTML = 'Đang kiểm tra kết nối...';
+            
+            const isConnected = await checkServerConnection();
+            if (isConnected) {
+                showError('Đã kết nối thành công đến máy chủ!', 'success');
+            }
+        }
+        
+        async function login(event) {
+            event.preventDefault();
+            
+            // Kiểm tra kết nối server trước khi đăng nhập (chỉ trong Electron)
+            if (isElectron) {
+                const isConnected = await checkServerConnection();
+                if (!isConnected) {
+                    showError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+                    return;
+                }
+            }
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!username || !password) {
+                showError('Vui lòng nhập tên đăng nhập và mật khẩu');
+                return;
+            }
+            
+            try {
+                let result;
+                
+                // Nếu đang trong Electron, sử dụng ipcRenderer
+                if (isElectron) {
+                    const { ipcRenderer } = require('electron');
+                    result = await ipcRenderer.invoke('login', { username, password });
+                } 
+                // Nếu đang trong browser, gọi API trực tiếp
+                else {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
+                    
+                    result = await response.json();
+                }
+                
+                if (result.success) {
+                    // Lưu token và thông tin người dùng
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    
+                    // Chuyển hướng đến trang chính
+                    window.location.href = 'main-page.html';
+                } else {
+                    if (isElectron && result.serverError) {
+                        // Xử lý lỗi server trong Electron
+                        const { ipcRenderer } = require('electron');
+                        await ipcRenderer.invoke('handle-server-error', result);
+                        updateServerStatus(false);
+                    }
+                    showError(result.message || 'Đăng nhập thất bại');
+                }
+            } catch (error) {
+                console.error('Lỗi đăng nhập:', error);
+                showError('Đã xảy ra lỗi khi đăng nhập');
+            }
+        }
+        
+        function showError(message, type = 'error') {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            
+            if (type === 'success') {
+                errorElement.style.backgroundColor = '#d4edda';
+                errorElement.style.color = '#155724';
+            } else {
+                errorElement.style.backgroundColor = '#f8d7da';
+                errorElement.style.color = '#721c24';
+            }
+            
+            errorElement.style.display = 'block';
+            
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

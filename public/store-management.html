@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý cửa hàng - titi</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #4285f4;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .header .username {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        .container {
+            padding: 30px;
+        }
+        .title {
+            color: #4285f4;
+            margin-bottom: 20px;
+        }
+        .actions {
+            margin-top: 20px;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        button.secondary {
+            background-color: #757575;
+        }
+        button.secondary:hover {
+            background-color: #616161;
+        }
+        .info {
+            margin-top: 30px;
+            color: #333;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Quản lý cửa hàng</h1>
+        <div class="user-info">
+            <span class="username" id="userDisplay"></span>
+            <button id="backBtn" class="secondary">Quay lại</button>
+            <button id="logoutBtn">Đăng xuất</button>
+        </div>
+    </div>
+    <div class="container">
+        <h2 class="title">Chức năng quản lý cửa hàng</h2>
+        <ul class="menu-list" style="list-style:none; padding:0; display:flex; gap:20px; margin-bottom:30px;">
+            <li><button type="button" id="menu-product" style="background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer;">Thêm mới sản phẩm</button></li>
+            <li><button id="menu-product-list" style="background-color: #17a2b8; color: white;">Danh sách Sản phẩm</button></li>
+            <li><button id="menu-order">Đơn hàng</button></li>
+            <li><button id="menu-customer">Khách hàng</button></li>
+        </ul>
+        <div class="info" id="infoContent">
+            <p>Bạn có thể thêm, sửa, xóa thông tin cửa hàng, sản phẩm, nhân viên, ...</p>
+            <p>Hãy phát triển thêm các tính năng theo nhu cầu của bạn!</p>
+        </div>
+        <div class="actions">
+            <!-- Nút chức năng sẽ bổ sung sau -->
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra đăng nhập
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Hiển thị thông tin người dùng
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (user) {
+                document.getElementById('userDisplay').textContent = user.username;
+            }
+            
+            document.getElementById('backBtn').addEventListener('click', function() {
+                window.location.href = 'main-page.html';
+            });
+            
+            document.getElementById('logoutBtn').addEventListener('click', async function() {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    // Xóa thông tin người dùng khỏi localStorage
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('currentUser');
+                    
+                    // Chuyển hướng về trang đăng nhập
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    console.error('Lỗi khi đăng xuất:', error);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'index.html';
+                }
+            });
+            
+            // Thêm sự kiện cho menu
+            document.getElementById('menu-product').onclick = function() {
+                document.getElementById('infoContent').innerHTML = `
+                    <h3 style="color: #4285f4; text-align: center;">Quản lý Sản phẩm</h3>
+                    <form id="productForm" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+                        <div style="margin-bottom: 15px;">
+                            <label for="productName" style="display: block; font-weight: bold; margin-bottom: 5px;">Tên sản phẩm <span style="color: red;">*</span>:</label>
+                            <input type="text" id="productName" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label for="productCode" style="display: block; font-weight: bold; margin-bottom: 5px;">Mã tự nhập:</label>
+                            <input type="text" id="productCode" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label for="importPrice" style="display: block; font-weight: bold; margin-bottom: 5px;">Giá nhập <span style="color: red;">*</span>:</label>
+                            <input type="number" id="importPrice" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label for="salePrice" style="display: block; font-weight: bold; margin-bottom: 5px;">Giá bán <span style="color: red;">*</span>:</label>
+                            <input type="number" id="salePrice" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label for="discountPercent" style="display: block; font-weight: bold; margin-bottom: 5px;">% Giảm giá:</label>
+                            <input type="number" id="discountPercent" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label for="discountAmount" style="display: block; font-weight: bold; margin-bottom: 5px;">Tiền giảm giá:</label>
+                            <input type="number" id="discountAmount" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label for="thumbnail" style="display: block; font-weight: bold; margin-bottom: 5px;">Ảnh đại diện:</label>
+                            <input type="file" id="thumbnail" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label for="description" style="display: block; font-weight: bold; margin-bottom: 5px;">Mô tả sản phẩm:</label>
+                            <textarea id="description" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px; min-height: 60px;"></textarea>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label for="importedQuantity" style="display: block; font-weight: bold; margin-bottom: 5px;">Số lượng đã nhập:</label>
+                            <input type="number" id="importedQuantity" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;" min="0">
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label for="soldQuantity" style="display: block; font-weight: bold; margin-bottom: 5px;">Số lượng đã bán:</label>
+                            <input type="number" id="soldQuantity" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;" min="0" readonly>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label for="remainingQuantity" style="display: block; font-weight: bold; margin-bottom: 5px;">Số lượng còn lại:</label>
+                            <input type="number" id="remainingQuantity" style="width: calc(100% - 20px); padding: 10px; border: 1px solid #ccc; border-radius: 4px;" min="0">
+                        </div>
+
+                        <div style="text-align: center;">
+                            <button type="button" id="addProduct" style="background-color: #4285f4; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Thêm sản phẩm</button>
+                        </div>
+                    </form>
+                    <div id="productList" style="max-width: 600px; margin: 20px auto;">
+                        <h4 style="color: #4285f4; text-align: center;">Danh sách sản phẩm</h4>
+                        <div id="message" style="color: green; text-align: center; margin: 10px 0;"></div>
+                        <ul id="productListContainer" style="list-style: none; padding: 0;">
+                            <!-- Danh sách sản phẩm sẽ được hiển thị tại đây -->
+                        </ul>
+                    </div>
+                `;
+                
+                // Tính lại số lượng đã bán khi thay đổi số lượng nhập hoặc còn lại
+                document.getElementById('importedQuantity').addEventListener('input', updateSoldQuantity);
+                document.getElementById('remainingQuantity').addEventListener('input', updateSoldQuantity);
+                
+                function updateSoldQuantity() {
+                    const importedQuantity = parseInt(document.getElementById('importedQuantity').value) || 0;
+                    const remainingQuantity = parseInt(document.getElementById('remainingQuantity').value) || 0;
+                    const soldQuantity = importedQuantity - remainingQuantity;
+                    document.getElementById('soldQuantity').value = soldQuantity >= 0 ? soldQuantity : 0;
+                }
+
+                document.getElementById('addProduct').onclick = async () => {
+                    const token = localStorage.getItem('token');
+                    const name = document.getElementById('productName').value.trim();
+                    const code = document.getElementById('productCode').value.trim();
+                    const importPrice = parseFloat(document.getElementById('importPrice').value);
+                    const salePrice = parseFloat(document.getElementById('salePrice').value);
+                    const discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
+                    const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
+                    const description = document.getElementById('description').value.trim();
+                    const importedQuantity = parseInt(document.getElementById('importedQuantity').value) || 0;
+                    const soldQuantity = parseInt(document.getElementById('soldQuantity').value) || 0;
+                    const remainingQuantity = parseInt(document.getElementById('remainingQuantity').value) || 0;
+
+                    // Validate input fields
+                    if (!name) {
+                        alert('Tên sản phẩm không được để trống!');
+                        return;
+                    }
+                    if (isNaN(importPrice) || importPrice <= 0) {
+                        alert('Giá nhập phải là một số hợp lệ và lớn hơn 0!');
+                        return;
+                    }
+                    if (isNaN(salePrice) || salePrice <= 0) {
+                        alert('Giá bán phải là một số hợp lệ và lớn hơn 0!');
+                        return;
+                    }
+                    
+                    try {
+                        // Tạo FormData để gửi file
+                        const formData = new FormData();
+                        formData.append('name', name);
+                        formData.append('code', code);
+                        formData.append('autoCode', `AUTO-${Date.now()}`);
+                        formData.append('importPrice', importPrice);
+                        formData.append('salePrice', salePrice);
+                        formData.append('discountPercent', discountPercent);
+                        formData.append('discountAmount', discountAmount);
+                        formData.append('description', description || '');
+                        formData.append('importedQuantity', importedQuantity);
+                        formData.append('soldQuantity', soldQuantity);
+                        formData.append('remainingQuantity', remainingQuantity);
+                        
+                        const thumbnailInput = document.getElementById('thumbnail');
+                        if (thumbnailInput && thumbnailInput.files && thumbnailInput.files[0]) {
+                            formData.append('thumbnail', thumbnailInput.files[0]);
+                        }
+                        
+                        // Gửi dữ liệu sản phẩm lên server
+                        const response = await fetch('/api/products', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Reset form sau khi thêm thành công
+                            document.getElementById('productForm').reset();
+                            document.getElementById('message').textContent = 'Sản phẩm đã được thêm vào cơ sở dữ liệu!';
+                            
+                            // Xóa thông báo sau 3 giây
+                            setTimeout(() => {
+                                document.getElementById('message').textContent = '';
+                            }, 3000);
+                            
+                            // Cập nhật danh sách sản phẩm
+                            fetchProducts();
+                        } else {
+                            alert(result.message || 'Không thể thêm sản phẩm!');
+                        }
+                    } catch (error) {
+                        console.error('Lỗi khi thêm sản phẩm:', error);
+                        alert('Không thể thêm sản phẩm. Vui lòng thử lại!');
+                    }
+                };
+
+                async function fetchProducts() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch('/api/products', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            const products = result.products;
+                            const container = document.getElementById('productListContainer');
+                            
+                            if (container) {
+                                container.innerHTML = '';
+                                
+                                products.forEach(product => {
+                                    const li = document.createElement('li');
+                                    li.textContent = `${product.name} - ${product.salePrice} VND`;
+                                    li.style.padding = '8px';
+                                    li.style.borderBottom = '1px solid #eee';
+                                    li.style.cursor = 'pointer';
+                                    li.onclick = () => window.location.href = `product-detail.html?id=${product.id}`;
+                                    container.appendChild(li);
+                                });
+                            }
+                        } else {
+                            console.error('Lỗi khi lấy danh sách sản phẩm:', result.message);
+                        }
+                    } catch (error) {
+                        console.error('Lỗi khi lấy danh sách sản phẩm:', error);
+                    }
+                }
+
+                // Gọi hàm fetchProducts khi hiển thị giao diện quản lý sản phẩm
+                fetchProducts();
+            };
+            
+            // Thêm sự kiện chuyển trang cho nút Danh sách Sản phẩm
+            document.getElementById('menu-product-list').onclick = function() {
+                window.location.href = 'product-list.html';
+            };
+            
+            document.getElementById('menu-order').onclick = function() {
+                document.getElementById('infoContent').innerHTML = '<h3>Quản lý Đơn hàng</h3><p>Chức năng quản lý đơn hàng sẽ được phát triển tại đây.</p>';
+            };
+            
+            document.getElementById('menu-customer').onclick = function() {
+                document.getElementById('infoContent').innerHTML = '<h3>Quản lý Khách hàng</h3><p>Chức năng quản lý khách hàng sẽ được phát triển tại đây.</p>';
+            };
+        });
+    </script>
+</body>
+</html>

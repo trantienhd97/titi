@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>TITI - Hệ thống Quản lý</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #4285f4;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .header .username {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .welcome-box {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .welcome-box h2 {
+            color: #4285f4;
+            margin-top: 0;
+        }
+        .welcome-box p {
+            color: #555;
+            font-size: 18px;
+            margin-bottom: 0;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .menu-item {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+        .menu-item i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #4285f4;
+        }
+        .menu-item.products i { color: #0f9d58; }
+        .menu-item.accounts i { color: #db4437; }
+        .menu-item.database i { color: #f4b400; }
+        .menu-item.store i { color: #4285f4; }
+        
+        .menu-item h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+        .menu-item p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .menu-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 15px;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            margin-top: 40px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>TITI - Hệ thống Quản lý</h1>
+        <div class="user-info">
+            <span class="username" id="userDisplay"></span>
+            <button id="logoutBtn" style="background-color: #db4437; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Đăng xuất</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome-box">
+            <h2>Chào mừng đến với Hệ thống Quản lý TITI</h2>
+            <p>Chọn một tính năng từ danh sách bên dưới để bắt đầu</p>
+        </div>
+        
+        <div class="menu-grid">
+            <div class="menu-item products" onclick="location.href='product-list.html'">
+                <img class="menu-icon" src="https://cdn-icons-png.flaticon.com/512/2821/2821739.png" alt="Products">
+                <h3>Quản lý Sản phẩm</h3>
+                <p>Thêm, sửa, xóa và quản lý sản phẩm trong kho</p>
+            </div>
+            
+            <div class="menu-item accounts" onclick="location.href='accounts.html'">
+                <img class="menu-icon" src="https://cdn-icons-png.flaticon.com/512/1077/1077114.png" alt="Accounts">
+                <h3>Quản lý Tài khoản</h3>
+                <p>Quản lý người dùng và phân quyền hệ thống</p>
+            </div>
+            
+            <div class="menu-item database" onclick="location.href='database-viewer.html'">
+                <img class="menu-icon" src="https://cdn-icons-png.flaticon.com/512/2906/2906274.png" alt="Database">
+                <h3>Xem Database</h3>
+                <p>Truy cập và xem dữ liệu trong cơ sở dữ liệu</p>
+            </div>
+            
+            <div class="menu-item store" onclick="location.href='store-management.html'">
+                <img class="menu-icon" src="https://cdn-icons-png.flaticon.com/512/3081/3081559.png" alt="Store">
+                <h3>Quản lý Cửa hàng</h3>
+                <p>Thực hiện các hoạt động bán hàng và kinh doanh</p>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 TITI. Phần mềm quản lý cửa hàng | Phiên bản 1.0.0</p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra đăng nhập
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Hiển thị thông tin người dùng
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (user) {
+                document.getElementById('userDisplay').textContent = user.username;
+            }
+            
+            // Thiết lập sự kiện logout
+            document.getElementById('logoutBtn').addEventListener('click', async function() {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    console.error('Lỗi khi đăng xuất:', error);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'index.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

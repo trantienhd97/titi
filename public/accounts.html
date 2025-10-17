@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý tài khoản - TITI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 36px 40px;
+        }
+        h2 {
+            color: #4285f4;
+            text-align: center;
+            letter-spacing: 0.5px;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background-color: #3367d6;
+        }
+        .add-user-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+            margin-left: 10px;
+        }
+        .add-user-btn:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #4285f4;
+            color: white;
+            font-weight: normal;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .edit-btn {
+            background-color: #f4b400;
+            color: white;
+        }
+        .edit-btn:hover {
+            background-color: #e09c00;
+        }
+        .delete-btn {
+            background-color: #db4437;
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #b93125;
+        }
+        .reset-btn {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .reset-btn:hover {
+            background-color: #138496;
+        }
+        .admin {
+            background-color: #dc3545;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .user {
+            background-color: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 400px;
+            border-radius: 8px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-submit {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .form-submit:hover {
+            background-color: #3367d6;
+        }
+        .alert {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .required:after {
+            content: " *";
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="back-btn" onclick="window.location.href='main-page.html'">Quay lại</button>
+            <h2>Quản lý Tài khoản</h2>
+            <button class="add-user-btn" id="addUserBtn">Thêm tài khoản</button>
+        </div>
+        
+        <div id="alertMessage" class="alert"></div>
+        
+        <input type="text" id="searchInput" placeholder="Tìm kiếm tài khoản...">
+        
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên đăng nhập</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Danh sách người dùng sẽ được hiển thị ở đây -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal thêm/sửa tài khoản -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitle">Thêm tài khoản mới</h3>
+            
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                
+                <div class="form-group">
+                    <label for="username" class="required">Tên đăng nhập</label>
+                    <input type="text" id="username" required>
+                </div>
+                
+                <div class="form-group" id="passwordGroup">
+                    <label for="password" class="required">Mật khẩu</label>
+                    <input type="password" id="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fullName" class="required">Họ tên</label>
+                    <input type="text" id="fullName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="role" class="required">Vai trò</label>
+                    <select id="role" required>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="status" class="required">Trạng thái</label>
+                    <select id="status" required>
+                        <option value="active">Hoạt động</option>
+                        <option value="inactive">Không hoạt động</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="form-submit">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận xóa -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeDeleteModal">&times;</span>
+            <h3>Xác nhận xóa</h3>
+            <p>Bạn có chắc chắn muốn xóa tài khoản này?</p>
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="action-btn delete-btn" id="confirmDelete">Xóa</button>
+                <button class="action-btn" style="background-color: #6c757d; color: white;" id="cancelDelete">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal đặt lại mật khẩu -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeResetModal">&times;</span>
+            <h3>Đặt lại mật khẩu</h3>
+            
+            <div class="form-group">
+                <label for="newPassword" class="required">Mật khẩu mới</label>
+                <input type="password" id="newPassword" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword" class="required">Xác nhận mật khẩu</label>
+                <input type="password" id="confirmPassword" required>
+            </div>
+            
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="action-btn reset-btn" id="confirmReset">Đặt lại</button>
+                <button class="action-btn" style="background-color: #6c757d; color: white;" id="cancelReset">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kiểm tra đăng nhập
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Lấy thông tin người dùng
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser || currentUser.role !== 'admin') {
+                showAlert('Bạn không có quyền truy cập trang này!', 'error');
+                setTimeout(() => {
+                    window.location.href = 'main-page.html';
+                }, 2000);
+                return;
+            }
+            
+            // Biến chứa danh sách người dùng
+            let users = [];
+            let resetPasswordUserId = null;
+            let deleteUserId = null;
+            
+            // Các modal
+            const userModal = document.getElementById('userModal');
+            const deleteModal = document.getElementById('deleteModal');
+            const resetPasswordModal = document.getElementById('resetPasswordModal');
+            
+            // Đóng modal khi click vào nút đóng
+            document.querySelectorAll('.close, #cancelDelete, #cancelReset').forEach(element => {
+                element.addEventListener('click', function() {
+                    userModal.style.display = 'none';
+                    deleteModal.style.display = 'none';
+                    resetPasswordModal.style.display = 'none';
+                });
+            });
+            
+            // Đóng modal khi click bên ngoài
+            window.addEventListener('click', function(event) {
+                if (event.target === userModal) {
+                    userModal.style.display = 'none';
+                } else if (event.target === deleteModal) {
+                    deleteModal.style.display = 'none';
+                } else if (event.target === resetPasswordModal) {
+                    resetPasswordModal.style.display = 'none';
+                }
+            });
+            
+            // Mở modal thêm người dùng
+            document.getElementById('addUserBtn').addEventListener('click', function() {
+                document.getElementById('userForm').reset();
+                document.getElementById('modalTitle').textContent = 'Thêm tài khoản mới';
+                document.getElementById('userId').value = '';
+                document.getElementById('passwordGroup').style.display = 'block';
+                userModal.style.display = 'block';
+            });
+            
+            // Xử lý submit form
+            document.getElementById('userForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const userId = document.getElementById('userId').value;
+                const isEditing = userId !== '';
+                
+                const userData = {
+                    username: document.getElementById('username').value.trim(),
+                    fullName: document.getElementById('fullName').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    role: document.getElementById('role').value,
+                    status: document.getElementById('status').value
+                };
+                
+                // Thêm mật khẩu nếu đang thêm mới hoặc có nhập mật khẩu mới
+                if (!isEditing) {
+                    userData.password = document.getElementById('password').value;
+                }
+                
+                try {
+                    const url = isEditing ? `/api/auth/users/${userId}` : '/api/auth/register-by-admin';
+                    const method = isEditing ? 'PUT' : 'POST';
+                    
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        userModal.style.display = 'none';
+                        showAlert(isEditing ? 'Cập nhật tài khoản thành công!' : 'Thêm tài khoản thành công!', 'success');
+                        loadUsers();
+                    } else {
+                        showAlert(result.message || 'Có lỗi xảy ra!', 'error');
+                    }
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    showAlert('Có lỗi xảy ra khi xử lý yêu cầu!', 'error');
+                }
+            });
+            
+            // Xử lý xóa người dùng
+            document.getElementById('confirmDelete').addEventListener('click', async function() {
+                if (deleteUserId) {
+                    try {
+                        const response = await fetch(`/api/auth/users/${deleteUserId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            deleteModal.style.display = 'none';
+                            showAlert('Xóa tài khoản thành công!', 'success');
+                            loadUsers();
+                        } else {
+                            showAlert(result.message || 'Không thể xóa tài khoản!', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Lỗi:', error);
+                        showAlert('Có lỗi xảy ra khi xóa tài khoản!', 'error');
+                    }
+                    
+                    deleteUserId = null;
+                }
+            });
+            
+            // Xử lý đặt lại mật khẩu
+            document.getElementById('confirmReset').addEventListener('click', async function() {
+                if (resetPasswordUserId) {
+                    const newPassword = document.getElementById('newPassword').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    
+                    if (newPassword !== confirmPassword) {
+                        showAlert('Mật khẩu xác nhận không khớp!', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch(`/api/auth/reset-password/${resetPasswordUserId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ password: newPassword })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            resetPasswordModal.style.display = 'none';
+                            showAlert('Đặt lại mật khẩu thành công!', 'success');
+                        } else {
+                            showAlert(result.message || 'Không thể đặt lại mật khẩu!', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Lỗi:', error);
+                        showAlert('Có lỗi xảy ra khi đặt lại mật khẩu!', 'error');
+                    }
+                    
+                    resetPasswordUserId = null;
+                }
+            });
+            
+            // Tìm kiếm người dùng
+            document.getElementById('searchInput').addEventListener('input', function() {
+                const searchValue = this.value.toLowerCase();
+                const filteredUsers = users.filter(user => 
+                    user.username.toLowerCase().includes(searchValue) || 
+                    (user.fullName && user.fullName.toLowerCase().includes(searchValue)) ||
+                    (user.email && user.email.toLowerCase().includes(searchValue))
+                );
+                
+                renderUsers(filteredUsers);
+            });
+            
+            // Lấy danh sách người dùng
+            async function loadUsers() {
+                try {
+                    const response = await fetch('/api/auth/users', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        users = result.users;
+                        renderUsers(users);
+                    } else {
+                        showAlert('Không thể lấy danh sách người dùng!', 'error');
+                    }
+                } catch (error) {
+                    console.error('Lỗi:', error);
+                    showAlert('Có lỗi xảy ra khi lấy danh sách người dùng!', 'error');
+                }
+            }
+            
+            // Hiển thị danh sách người dùng
+            function renderUsers(userList) {
+                const tbody = document.querySelector('#userTable tbody');
+                tbody.innerHTML = '';
+                
+                if (userList.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Không tìm thấy người dùng nào</td></tr>';
+                    return;
+                }
+                
+                userList.forEach(user => {
+                    const tr = document.createElement('tr');
+                    
+                    tr.innerHTML = `
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.fullName || '-'}</td>
+                        <td>${user.email || '-'}</td>
+                        <td><span class="${user.role}">${user.role === 'admin' ? 'Admin' : 'User'}</span></td>
+                        <td>${user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}</td>
+                        <td>
+                            <button class="action-btn edit-btn" data-id="${user.id}">Sửa</button>
+                            <button class="action-btn delete-btn" data-id="${user.id}" ${user.id === currentUser.id ? 'disabled' : ''}>Xóa</button>
+                            <button class="action-btn reset-btn" data-id="${user.id}">Đặt lại MK</button>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(tr);
+                });
+                
+                // Xử lý sự kiện nút Sửa
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const userId = this.getAttribute('data-id');
+                        const user = users.find(u => u.id == userId);
+                        
+                        if (user) {
+                            document.getElementById('userId').value = user.id;
+                            document.getElementById('username').value = user.username;
+                            document.getElementById('fullName').value = user.fullName || '';
+                            document.getElementById('email').value = user.email || '';
+                            document.getElementById('role').value = user.role;
+                            document.getElementById('status').value = user.status;
+                            document.getElementById('passwordGroup').style.display = 'none';
+                            document.getElementById('modalTitle').textContent = 'Cập nhật tài khoản';
+                            
+                            userModal.style.display = 'block';
+                        }
+                    });
+                });
+                
+                // Xử lý sự kiện nút Xóa
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    if (!btn.disabled) {
+                        btn.addEventListener('click', function() {
+                            deleteUserId = this.getAttribute('data-id');
+                            deleteModal.style.display = 'block';
+                        });
+                    }
+                });
+                
+                // Xử lý sự kiện nút Đặt lại mật khẩu
+                document.querySelectorAll('.reset-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        resetPasswordUserId = this.getAttribute('data-id');
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                        resetPasswordModal.style.display = 'block';
+                    });
+                });
+            }
+            
+            // Hiển thị thông báo
+            function showAlert(message, type) {
+                const alertDiv = document.getElementById('alertMessage');
+                alertDiv.textContent = message;
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    alertDiv.style.display = 'none';
+                }, 3000);
+            }
+            
+            // Khởi tạo trang
+            loadUsers();
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 services:
   - type: web
     name: titi-backend
-    env: node
+    runtime: node
     buildCommand: npm install --production
     startCommand: node server.js
     envVars:
